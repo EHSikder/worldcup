@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "design-website": {
+      "source": "aiagentwithdhruv/skills",
+      "sourceType": "github",
+      "skillPath": "design-website/SKILL.md",
+      "computedHash": "6d203b9cde2fdaf6dd35525f187d3934a7862d223577c6c955d2b4a0975926a2"
+    }
+  }
+}

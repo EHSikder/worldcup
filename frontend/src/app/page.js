@@ -41,14 +41,13 @@ export default function HomePage() {
       <section className="hero">
         <div className="hero-content">
           <div className="hero-badge">
-            <TrophyHeroIcon />
-            FIFA World Cup 2026
+            R BUILD Prediction Challenge
           </div>
-          <h1>Predict the World Cup 2026 Champion</h1>
+          <h1>Predict the Tournament Champion</h1>
           <p>
-            Fill your knockout bracket from the Round of 32 to the Final at MetLife Stadium.
-            Predict match winners, guess exact scores, and compete against fans worldwide
-            as real results roll in across the USA, Mexico, and Canada.
+            Fill your knockout bracket from the Round of 32 to the Final.
+            Predict match winners, guess exact scores, and compete against colleagues and friends
+            as real results roll in.
           </p>
           <div className="hero-cta">
             <Link href="/register" className="btn btn-primary btn-xl">

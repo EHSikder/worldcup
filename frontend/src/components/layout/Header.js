@@ -35,8 +35,9 @@ export default function Header() {
     <header className="header">
       <div className="header-inner">
         <Link href="/" className="header-logo">
-          <TrophyIcon />
-          <span>WC2026 Predictor</span>
+          {/* Placeholder for R-BUILD Primary Logo */}
+          <img src="/images/rbuild-logo.png" alt="R-BUILD Logo" width="120" height="40" style={{ objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; if (e.target.nextSibling) e.target.nextSibling.style.display = 'block'; }} />
+          <span style={{ display: 'none', fontStyle: 'italic', fontWeight: '900', letterSpacing: '-1px' }}>R BUILD</span>
         </Link>
 
         <nav className="header-nav">

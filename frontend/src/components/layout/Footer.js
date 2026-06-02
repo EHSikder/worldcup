@@ -1,16 +1,41 @@
 import Link from 'next/link';
 
 export default function Footer() {
+  const partners = [
+    { name: 'EXPAMET', src: '/images/partner-expamet.png' },
+    { name: 'K5', src: '/images/partner-k5.png' },
+    { name: 'MASTER BUILDERS', src: '/images/partner-masterbuilders.png' },
+    { name: 'SOS Chemicals', src: '/images/partner-sos.png' },
+    { name: 'Flowcrete', src: '/images/partner-flowcrete.png' },
+    { name: 'X-CALIBUR', src: '/images/partner-xcalibur.png' },
+    { name: 'TREMCO', src: '/images/partner-tremco.png' }
+  ];
+
   return (
     <footer className="footer">
-      <div className="container">
+      <div className="partners-banner">
+        <div className="container">
+          <div className="partners-grid">
+            {partners.map(partner => (
+              <img 
+                key={partner.name}
+                src={partner.src} 
+                alt={partner.name} 
+                title={partner.name}
+                className="partner-logo"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="container" style={{ padding: '3rem 0' }}>
         <div className="footer-grid">
           <div className="footer-brand">
-            <h3>WC2026 Predictor</h3>
+            <h3>R BUILD Predictor</h3>
             <p>
-              Predict the FIFA World Cup 2026 knockout bracket, compete against friends and fans
-              worldwide, and climb the leaderboard as real results come in. From the Round of 32
-              to the Final in New York — every pick counts.
+              Predict the tournament outcomes, compete against friends and colleagues,
+              and climb the leaderboard in the R BUILD Prediction Challenge.
             </p>
           </div>
           <div className="footer-links">
@@ -27,8 +52,8 @@ export default function Footer() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>&copy; {new Date().getFullYear()} WC2026 Predictor. All rights reserved.</span>
-          <span>FIFA World Cup 2026 — USA, Mexico, Canada</span>
+          <span>&copy; {new Date().getFullYear()} R BUILD. All rights reserved.</span>
+          <span>Powered by R BUILD and Partners</span>
         </div>
       </div>
     </footer>
