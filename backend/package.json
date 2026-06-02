@@ -1,0 +1,27 @@
+{
+  "name": "wc2026-predictor-backend",
+  "version": "1.0.0",
+  "description": "World Cup 2026 Knockout Prediction API",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "helmet": "^8.0.0",
+    "dotenv": "^16.4.5",
+    "@supabase/supabase-js": "^2.45.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "express-rate-limit": "^7.4.0",
+    "node-cron": "^3.0.3",
+    "twilio": "^5.3.0",
+    "exceljs": "^4.4.0",
+    "express-validator": "^7.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
