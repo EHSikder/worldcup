@@ -21,16 +21,24 @@ app.use(helmet());
 
 // CORS: allow multiple origins (comma-separated in env) or wildcard in dev
 const allowedOrigins = env.FRONTEND_URL
-  ? env.FRONTEND_URL.split(',').map(o => o.trim())
+  ? env.FRONTEND_URL.split(',').map(o => o.trim().replace(/\/$/, ''))
   : ['http://localhost:3000'];
 
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (server-to-server, curl, etc.)
     if (!origin) return callback(null, true);
+    
+    // Allow wildcard if configured
+    if (allowedOrigins.includes('*')) {
+      return callback(null, true);
+    }
+    
     if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
+    
+    console.error(`CORS Error: Origin ${origin} not allowed. Allowed origins: ${allowedOrigins.join(', ')}`);
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
