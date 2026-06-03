@@ -22,6 +22,7 @@ export default function CompleteProfilePage() {
   });
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!loading) {
@@ -150,9 +151,20 @@ export default function CompleteProfilePage() {
             </div>
 
             <div className="form-group" style={{ marginTop: 'var(--space-6)' }}>
-              <label className="form-label" style={{ textAlign: 'center', display: 'block', fontSize: '1.2rem', marginBottom: 'var(--space-4)' }}>
+              <label className="form-label" style={{ textAlign: 'center', display: 'block', fontSize: '1.2rem', marginBottom: 'var(--space-2)' }}>
                 {t('profile_team') || 'Select Favorite Team'}
               </label>
+
+              <div style={{ marginBottom: 'var(--space-4)', maxWidth: '400px', margin: '0 auto var(--space-4) auto' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Search for a team..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{ textAlign: 'center' }}
+                />
+              </div>
               
               <div style={{ 
                 display: 'grid', 
@@ -165,7 +177,9 @@ export default function CompleteProfilePage() {
                 borderRadius: 'var(--radius-md)',
                 border: '1px solid var(--color-border)'
               }}>
-                {teams.map(team => (
+                {teams
+                  .filter(team => team.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .map(team => (
                   <div 
                     key={team.id}
                     onClick={() => setFormData({ ...formData, favoriteTeamId: team.id })}
@@ -178,7 +192,7 @@ export default function CompleteProfilePage() {
                       cursor: 'pointer',
                       borderRadius: 'var(--radius-md)',
                       background: formData.favoriteTeamId === team.id ? 'var(--color-gold)' : 'var(--color-surface-light)',
-                      color: formData.favoriteTeamId === team.id ? '#111' : 'white',
+                      color: '#111',
                       border: formData.favoriteTeamId === team.id ? '2px solid transparent' : '2px solid transparent',
                       transition: 'all 0.2s ease',
                       textAlign: 'center'

@@ -64,7 +64,8 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link href="/login" className="btn btn-primary btn-sm">{t('nav_sign_in')}</Link>
+              <Link href="/login" className="btn btn-ghost btn-sm">{t('nav_sign_in')}</Link>
+              <Link href="/signup" className="btn btn-primary btn-sm">Sign Up</Link>
             </>
           )}
           <button className="mobile-menu-btn" onClick={() => setMobileOpen(true)} aria-label="Open menu">
@@ -100,6 +101,7 @@ export default function Header() {
             ) : (
               <>
                 <Link href="/login" onClick={() => setMobileOpen(false)}>{t('nav_sign_in')}</Link>
+                <Link href="/signup" onClick={() => setMobileOpen(false)} style={{ color: 'var(--color-gold)', fontWeight: 'bold' }}>Sign Up</Link>
               </>
             )}
           </div>

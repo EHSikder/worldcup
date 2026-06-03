@@ -5,19 +5,17 @@ import { useAuth } from '@/context/AuthContext';
 import Footer from '@/components/layout/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { auth, googleProvider } from '@/lib/firebase';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import api from '@/lib/api';
+import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import Link from 'next/link';
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
-  const { user, login, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [error, setError] = useState(null);
   const { t } = useLanguage();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && !loading) {
@@ -29,69 +27,53 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, loading, user, router]);
 
-  const handleEmailLogin = async (e) => {
+  const handleEmailSignup = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      setError('Please provide your email and password.');
+      setError('Please provide an email and password.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
       return;
     }
 
     try {
       setError(null);
-      setIsLoggingIn(true);
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const token = await userCredential.user.getIdToken();
       
-      const res = await api.post('/api/auth/firebase-login', { token });
+      // Store token so complete-profile can use it
+      sessionStorage.setItem('temp_firebase_token', token);
+      sessionStorage.setItem('temp_user_info', JSON.stringify({ email }));
       
-      if (res.success) {
-        if (res.requiresProfileCompletion) {
-          sessionStorage.setItem('temp_firebase_token', token);
-          sessionStorage.setItem('temp_user_info', JSON.stringify(res.user));
-          router.push('/complete-profile');
-        } else {
-          login(res.data.token, res.data.user);
-          router.push('/predictions');
-        }
-      } else {
-        setError(res.message || 'Login failed.');
-      }
+      router.push('/complete-profile');
     } catch (err) {
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setError('Invalid email or password.');
+      if (err.code === 'auth/email-already-in-use') {
+        setError('This email is already in use. Please log in.');
       } else {
-        setError(err.message || 'Failed to login.');
+        setError(err.message || 'Failed to sign up.');
       }
-    } finally {
-      setIsLoggingIn(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignup = async () => {
     try {
       setError(null);
-      setIsLoggingIn(true);
       const result = await signInWithPopup(auth, googleProvider);
       const token = await result.user.getIdToken();
       
-      const res = await api.post('/api/auth/firebase-login', { token });
-      
-      if (res.success) {
-        if (res.requiresProfileCompletion) {
-          sessionStorage.setItem('temp_firebase_token', token);
-          sessionStorage.setItem('temp_user_info', JSON.stringify(res.user));
-          router.push('/complete-profile');
-        } else {
-          login(res.data.token, res.data.user);
-          router.push('/predictions');
-        }
-      } else {
-        setError(res.message || 'Login failed.');
-      }
+      // We pass it to Firebase token login endpoint to see if it's new or existing.
+      // But since this is signup, we can just send them to complete profile.
+      // To be safe, let's just store token and go to complete-profile.
+      sessionStorage.setItem('temp_firebase_token', token);
+      sessionStorage.setItem('temp_user_info', JSON.stringify({
+        email: result.user.email,
+        name: result.user.displayName,
+      }));
+      router.push('/complete-profile');
     } catch (err) {
-      setError(err.message || 'Failed to login with Google.');
-    } finally {
-      setIsLoggingIn(false);
+      setError(err.message || 'Failed to sign up with Google.');
     }
   };
 
@@ -104,13 +86,13 @@ export default function LoginPage() {
       <div className="auth-page">
         <div className="auth-card" style={{ maxWidth: 450, margin: '40px auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
-            <h1 style={{ marginBottom: 'var(--space-2)' }}>{t('login_title') || 'Welcome Back'}</h1>
-            <p style={{ color: 'var(--color-text-muted)' }}>{t('login_subtitle') || 'Log in to continue your predictions'}</p>
+            <h1 style={{ marginBottom: 'var(--space-2)' }}>Create Account</h1>
+            <p style={{ color: 'var(--color-text-muted)' }}>Join the challenge and predict the World Cup!</p>
           </div>
 
           {error && <div className="alert alert-error">{error}</div>}
 
-          <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <form onSubmit={handleEmailSignup} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
             <div className="form-group">
               <label className="form-label">Email</label>
               <input 
@@ -135,8 +117,8 @@ export default function LoginPage() {
               />
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px', fontSize: '1.1rem' }} disabled={isLoggingIn}>
-              {isLoggingIn ? 'Logging in...' : 'Log In'}
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px', fontSize: '1.1rem' }}>
+              Sign Up
             </button>
           </form>
 
@@ -149,8 +131,7 @@ export default function LoginPage() {
           <button 
             type="button" 
             className="btn btn-secondary" 
-            onClick={handleGoogleLogin}
-            disabled={isLoggingIn}
+            onClick={handleGoogleSignup}
             style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '12px' }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24">
@@ -159,12 +140,12 @@ export default function LoginPage() {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
-            {t('login_google') || 'Continue with Google'}
+            Continue with Google
           </button>
           
           <div style={{ textAlign: 'center', marginTop: 'var(--space-6)', fontSize: '0.95rem' }}>
-            <span style={{ color: 'var(--color-text-muted)' }}>Don't have an account? </span>
-            <Link href="/signup" style={{ color: 'var(--color-primary-red)', fontWeight: 'bold' }}>Sign up</Link>
+            <span style={{ color: 'var(--color-text-muted)' }}>Already have an account? </span>
+            <Link href="/login" style={{ color: 'var(--color-primary-red)', fontWeight: 'bold' }}>Log in</Link>
           </div>
         </div>
       </div>
