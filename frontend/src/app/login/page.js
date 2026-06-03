@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import Footer from '@/components/layout/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { auth, googleProvider } from '@/lib/firebase';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { signInWithPopup } from 'firebase/auth';
 import api from '@/lib/api';
 import Link from 'next/link';
 
@@ -15,8 +15,6 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const { t } = useLanguage();
   
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
@@ -29,44 +27,6 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, loading, user, router]);
 
-  const handleEmailLogin = async (e) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setError('Please provide your email and password.');
-      return;
-    }
-
-    try {
-      setError(null);
-      setIsLoggingIn(true);
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const token = await userCredential.user.getIdToken();
-      
-      const res = await api.post('/api/auth/firebase-login', { token });
-      
-      if (res.success) {
-        if (res.requiresProfileCompletion) {
-          sessionStorage.setItem('temp_firebase_token', token);
-          sessionStorage.setItem('temp_user_info', JSON.stringify(res.user));
-          router.push('/complete-profile');
-        } else {
-          login(res.data.token, res.data.user);
-          router.push('/predictions');
-        }
-      } else {
-        setError(res.message || 'Login failed.');
-      }
-    } catch (err) {
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setError('Invalid email or password.');
-      } else {
-        setError(err.message || 'Failed to login.');
-      }
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
   const handleGoogleLogin = async () => {
     try {
       setError(null);
@@ -77,19 +37,13 @@ export default function LoginPage() {
       const res = await api.post('/api/auth/firebase-login', { token });
       
       if (res.success) {
-        if (res.requiresProfileCompletion) {
-          sessionStorage.setItem('temp_firebase_token', token);
-          sessionStorage.setItem('temp_user_info', JSON.stringify(res.user));
-          router.push('/complete-profile');
-        } else {
-          login(res.data.token, res.data.user);
-          router.push('/predictions');
-        }
-      } else {
-        setError(res.message || 'Login failed.');
+        login(res.data.token, res.data.user);
+        router.push('/predictions');
       }
     } catch (err) {
-      setError(err.message || 'Failed to login with Google.');
+      setError(err.data?.message || err.message || 'Failed to login with Google.');
+      // If there's an error, sign out from firebase client side so they can try again or sign up
+      auth.signOut().catch(()=> {});
     } finally {
       setIsLoggingIn(false);
     }
@@ -110,42 +64,6 @@ export default function LoginPage() {
 
           {error && <div className="alert alert-error">{error}</div>}
 
-          <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-            <div className="form-group">
-              <label className="form-label">Email</label>
-              <input 
-                type="email" 
-                className="form-input" 
-                placeholder="you@example.com" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            
-            <div className="form-group">
-              <label className="form-label">Password</label>
-              <input 
-                type="password" 
-                className="form-input" 
-                placeholder="••••••••" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px', fontSize: '1.1rem' }} disabled={isLoggingIn}>
-              {isLoggingIn ? 'Logging in...' : 'Log In'}
-            </button>
-          </form>
-
-          <div style={{ display: 'flex', alignItems: 'center', margin: 'var(--space-4) 0', color: 'var(--color-text-muted)' }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }}></div>
-            <span style={{ padding: '0 10px', fontSize: '0.9rem' }}>OR</span>
-            <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }}></div>
-          </div>
-
           <button 
             type="button" 
             className="btn btn-secondary" 
@@ -159,7 +77,7 @@ export default function LoginPage() {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
-            {t('login_google') || 'Continue with Google'}
+            {isLoggingIn ? 'Logging in...' : (t('login_google') || 'Log in with Google')}
           </button>
           
           <div style={{ textAlign: 'center', marginTop: 'var(--space-6)', fontSize: '0.95rem' }}>

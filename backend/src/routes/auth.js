@@ -16,7 +16,7 @@ router.post('/firebase-login', async (req, res, next) => {
 
     // Verify token
     const decodedToken = await admin.auth().verifyIdToken(token);
-    const { email, name, uid } = decodedToken;
+    const { email } = decodedToken;
 
     // Check if user exists
     const { data: user, error } = await supabase
@@ -26,11 +26,10 @@ router.post('/firebase-login', async (req, res, next) => {
       .single();
 
     if (error || !user) {
-      // User doesn't exist, tell frontend to prompt for profile completion
-      return res.json({
-        success: true,
-        requiresProfileCompletion: true,
-        user: { email, name, firebase_uid: uid }
+      // User doesn't exist, they need to sign up
+      return res.status(404).json({
+        success: false,
+        message: 'Account not found. Please sign up first.'
       });
     }
 
@@ -56,6 +55,46 @@ router.post('/firebase-login', async (req, res, next) => {
     });
   } catch (err) {
     console.error('Firebase Login Error:', err);
+    res.status(401).json({ success: false, message: 'Invalid Firebase token.' });
+  }
+});
+
+/**
+ * POST /api/auth/firebase-signup
+ * Receives Firebase ID token, checks if user exists. If they don't, signals to complete profile.
+ */
+router.post('/firebase-signup', async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ success: false, message: 'No token provided' });
+
+    // Verify token
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const { email, name, uid } = decodedToken;
+
+    // Check if user exists
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (user) {
+      // User already exists, they should log in
+      return res.status(409).json({
+        success: false,
+        message: 'Account already exists. Please log in.'
+      });
+    }
+
+    // User doesn't exist, tell frontend to prompt for profile completion
+    return res.json({
+      success: true,
+      requiresProfileCompletion: true,
+      user: { email, name, firebase_uid: uid }
+    });
+  } catch (err) {
+    console.error('Firebase Signup Error:', err);
     res.status(401).json({ success: false, message: 'Invalid Firebase token.' });
   }
 });

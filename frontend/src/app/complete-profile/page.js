@@ -67,19 +67,25 @@ export default function CompleteProfilePage() {
     setError(null);
     try {
       const token = sessionStorage.getItem('temp_firebase_token');
+      if (!token) {
+        setError('Session expired. Please try signing up again.');
+        setSubmitting(false);
+        return;
+      }
+      
       const res = await api.post('/api/auth/complete-profile', {
         token,
         mobile_number: formData.mobile_number,
         civil_id: formData.civil_id,
         favorite_team_id: formData.favoriteTeamId,
-        full_name: formData.fullName // Allowing them to edit the name if they want
+        full_name: formData.fullName
       });
       login(res.data.token, res.data.user);
       sessionStorage.removeItem('temp_firebase_token');
       sessionStorage.removeItem('temp_user_info');
       router.push('/predictions');
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to complete profile');
+      setError(err.data?.message || err.message || 'Failed to complete profile');
       setSubmitting(false);
     }
   };
