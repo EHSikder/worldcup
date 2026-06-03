@@ -21,7 +21,7 @@ router.post('/firebase-login', async (req, res, next) => {
     // Check if user exists
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, full_name, email, mobile_number, jwt_token_version')
+      .select('id, full_name, email, mobile_number, jwt_token_version, favorite_team_id')
       .eq('email', email)
       .single();
 
@@ -50,6 +50,7 @@ router.post('/firebase-login', async (req, res, next) => {
           full_name: user.full_name,
           email: user.email,
           mobile_number: user.mobile_number,
+          favorite_team_id: user.favorite_team_id,
         },
       },
     });
@@ -150,7 +151,7 @@ router.post('/complete-profile', async (req, res, next) => {
     const { data: user, error } = await supabase
       .from('users')
       .insert(insertData)
-      .select('id, full_name, email, mobile_number, jwt_token_version')
+      .select('id, full_name, email, mobile_number, jwt_token_version, favorite_team_id')
       .single();
 
     if (error) {
@@ -175,6 +176,7 @@ router.post('/complete-profile', async (req, res, next) => {
           full_name: user.full_name,
           email: user.email,
           mobile_number: user.mobile_number,
+          favorite_team_id: user.favorite_team_id,
         },
       },
     });
