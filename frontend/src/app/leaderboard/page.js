@@ -152,7 +152,7 @@ export default function LeaderboardPage() {
         }}>
           <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: 'rgba(169,223,0,0.15)', pointerEvents: 'none' }} />
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A9DF00', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>Grand Prize Pool</div>
+            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A9DF00', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>{t('lb_grand_prize_label')}</div>
             <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em' }}>$1,000</div>
           </div>
         </div>
@@ -179,8 +179,8 @@ export default function LeaderboardPage() {
             </svg>
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827' }}>Grand Prize: <span style={{ fontWeight: 800, color: '#D4A843' }}>$1,000</span></div>
-            <div style={{ fontSize: '0.8rem', color: '#9CA3AF', fontWeight: 500 }}>Top predictor wins it all</div>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827' }}>{t('lb_grand_champion_title')} <span style={{ fontWeight: 800, color: '#D4A843' }}>$1,000</span></div>
+            <div style={{ fontSize: '0.8rem', color: '#9CA3AF', fontWeight: 500 }}>{t('lb_grand_champion_subtitle')}</div>
           </div>
         </div>
 

@@ -1,6 +1,10 @@
+'use client';
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Footer() {
+  const { t } = useLanguage();
+
   const partners = [
     { name: 'EXPAMET', src: '/images/partner-expamet.png' },
     { name: 'K5', src: '/images/partner-k5.png' },
@@ -8,7 +12,7 @@ export default function Footer() {
     { name: 'SOS Chemicals', src: '/images/partner-sos.png' },
     { name: 'Flowcrete', src: '/images/partner-flowcrete.png' },
     { name: 'X-CALIBUR', src: '/images/partner-xcalibur.png' },
-    { name: 'TREMCO', src: '/images/partner-tremco.png' }
+    { name: 'TREMCO', src: '/images/partner-tremco.png' },
   ];
 
   return (
@@ -16,28 +20,25 @@ export default function Footer() {
       <div className="container" style={{ padding: '3rem 0' }}>
         <div className="footer-grid">
           <div className="footer-brand">
-            <h3>R BUILD Predictor</h3>
-            <p>
-              Predict the tournament outcomes, compete against friends and colleagues,
-              and climb the leaderboard in the R BUILD Prediction Challenge.
-            </p>
+            <h3>{t('footer_brand_name')}</h3>
+            <p>{t('footer_brand_desc')}</p>
           </div>
           <div className="footer-links">
-            <h4>Navigation</h4>
-            <Link href="/">Home</Link>
-            <Link href="/bracket">Bracket</Link>
-            <Link href="/leaderboard">Leaderboard</Link>
-            <Link href="/register">Register</Link>
+            <h4>{t('footer_nav_title')}</h4>
+            <Link href="/">{t('footer_nav_home')}</Link>
+            <Link href="/predictions">{t('footer_nav_predictions')}</Link>
+            <Link href="/leaderboard">{t('footer_nav_leaderboard')}</Link>
+            <Link href="/login">{t('footer_nav_login')}</Link>
           </div>
           <div className="footer-links">
-            <h4>Legal</h4>
-            <Link href="/terms">Terms of Service</Link>
-            <Link href="/privacy">Privacy Policy</Link>
+            <h4>{t('footer_legal_title')}</h4>
+            <Link href="/terms">{t('footer_terms')}</Link>
+            <Link href="/privacy">{t('footer_privacy')}</Link>
           </div>
         </div>
         <div className="footer-bottom">
-          <span>&copy; {new Date().getFullYear()} R BUILD. All rights reserved.</span>
-          <span>Powered by R BUILD and Partners</span>
+          <span>© {new Date().getFullYear()} R BUILD. {t('footer_copy')}</span>
+          <span>{t('footer_powered')}</span>
         </div>
       </div>
     </footer>

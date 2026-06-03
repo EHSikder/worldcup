@@ -31,6 +31,17 @@ export const ar = {
   scoring_winner: "الفائز الصحيح",
   scoring_exact: "النتيجة الدقيقة",
   scoring_pts: "نقطة",
+  scoring_exact_bonus_title: "⚡ مكافأة النتيجة الدقيقة",
+  scoring_exact_bonus_desc: "اكسب نقاطاً إضافية في أي جولة إذا توقعت النتيجة الدقيقة تماماً!",
+
+  // Scoring rounds (used in scoring cards)
+  scoring_round_group: "دور المجموعات",
+  scoring_round_r32: "دور الـ32",
+  scoring_round_r16: "دور الـ16",
+  scoring_round_qf: "ربع النهائي",
+  scoring_round_sf: "نصف النهائي",
+  scoring_round_3rd: "المركز الثالث",
+  scoring_round_final: "النهائي / بطل البطولة",
 
   // Homepage - Teams
   teams_title: "48 فريقاً",
@@ -43,6 +54,18 @@ export const ar = {
   cta_btn: "ابدأ التوقع الآن",
 
   // Footer
+  footer_brand_name: "R BUILD Predictor",
+  footer_brand_desc: "توقع نتائج البطولة، تنافس مع الأصدقاء والزملاء، وتصدر لوحة المتصدرين في تحدي توقعات R BUILD.",
+  footer_nav_title: "التنقل",
+  footer_nav_home: "الرئيسية",
+  footer_nav_predictions: "التوقعات",
+  footer_nav_leaderboard: "المتصدرين",
+  footer_nav_login: "تسجيل الدخول",
+  footer_legal_title: "قانوني",
+  footer_terms: "شروط الخدمة",
+  footer_privacy: "سياسة الخصوصية",
+  footer_copy: "جميع الحقوق محفوظة.",
+  footer_powered: "بدعم من R BUILD والشركاء",
   footer_text: "© 2026 تحدي توقعات R BUILD. جميع الحقوق محفوظة.",
 
   // Leaderboard
@@ -55,6 +78,10 @@ export const ar = {
   lb_col_rank: "المركز",
   lb_col_user: "اسم المستخدم",
   lb_col_team: "الفريق",
+  lb_grand_prize_label: "مجموع الجوائز الكبرى",
+  lb_grand_prize_tagline: "المتوقع الأول يفوز بالكل",
+  lb_grand_champion_title: "الجائزة الكبرى:",
+  lb_grand_champion_subtitle: "المتوقع الأول يفوز بالكل",
 
   // Predictions
   pred_title: "توقعات المباريات",

@@ -120,16 +120,16 @@ export default function HomePage() {
             {/* Glow effect */}
             <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(169,223,0,0.15)', pointerEvents: 'none' }} />
             <div style={{ position: 'absolute', bottom: -20, left: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(169,223,0,0.1)', pointerEvents: 'none' }} />
-            <h3 style={{ color: '#A9DF00', marginBottom: '8px', fontSize: '1.4rem', fontWeight: 900, letterSpacing: '0.03em', position: 'relative' }}>⚡ Exact Score Bonus</h3>
+            <h3 style={{ color: '#A9DF00', marginBottom: '8px', fontSize: '1.4rem', fontWeight: 900, letterSpacing: '0.03em', position: 'relative' }}>{t('scoring_exact_bonus_title')}</h3>
             <div style={{ fontSize: '3rem', fontWeight: 900, color: '#ffffff', lineHeight: 1, position: 'relative' }}>+10</div>
             <div style={{ fontSize: '1rem', fontWeight: 700, color: '#A9DF00', marginBottom: 6, position: 'relative' }}>{t('scoring_pts')}</div>
-            <p style={{ color: 'rgba(255,255,255,0.75)', marginTop: '4px', fontSize: '0.9rem', position: 'relative' }}>Earn bonus points in any round if you predict the exact score perfectly!</p>
+            <p style={{ color: 'rgba(255,255,255,0.75)', marginTop: '4px', fontSize: '0.9rem', position: 'relative' }}>{t('scoring_exact_bonus_desc')}</p>
           </div>
 
           <div className="scoring-grid">
             {SCORING_TABLE.map((item) => (
               <div className="scoring-card" key={item.round} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', minHeight: '140px' }}>
-                <div className="scoring-round" style={{ marginBottom: '16px', fontSize: '1.1rem' }}>{item.round}</div>
+                <div className="scoring-round" style={{ marginBottom: '16px', fontSize: '1.1rem' }}>{t(item.roundKey)}</div>
                 <div className="scoring-points" style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{item.points}</div>
                 <div className="scoring-label" style={{ marginTop: '8px', color: 'var(--color-text-muted)' }}>{t('scoring_pts')}</div>
               </div>

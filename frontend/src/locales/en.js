@@ -31,6 +31,17 @@ export const en = {
   scoring_winner: "Correct Winner",
   scoring_exact: "Exact Score",
   scoring_pts: "pts",
+  scoring_exact_bonus_title: "⚡ Exact Score Bonus",
+  scoring_exact_bonus_desc: "Earn bonus points in any round if you predict the exact score perfectly!",
+
+  // Scoring rounds (used in scoring cards)
+  scoring_round_group: "Group Stage",
+  scoring_round_r32: "Round of 32",
+  scoring_round_r16: "Round of 16",
+  scoring_round_qf: "Quarter-Finals",
+  scoring_round_sf: "Semi-Finals",
+  scoring_round_3rd: "Third Place",
+  scoring_round_final: "Final / Tournament Winner",
 
   // Homepage - Teams
   teams_title: "The 48 Teams",
@@ -43,6 +54,18 @@ export const en = {
   cta_btn: "Start Predicting Now",
 
   // Footer
+  footer_brand_name: "R BUILD Predictor",
+  footer_brand_desc: "Predict the tournament outcomes, compete against friends and colleagues, and climb the leaderboard in the R BUILD Prediction Challenge.",
+  footer_nav_title: "Navigation",
+  footer_nav_home: "Home",
+  footer_nav_predictions: "Predictions",
+  footer_nav_leaderboard: "Leaderboard",
+  footer_nav_login: "Sign In",
+  footer_legal_title: "Legal",
+  footer_terms: "Terms of Service",
+  footer_privacy: "Privacy Policy",
+  footer_copy: "All rights reserved.",
+  footer_powered: "Powered by R BUILD and Partners",
   footer_text: "© 2026 R BUILD Prediction Challenge. All rights reserved.",
 
   // Leaderboard
@@ -55,6 +78,10 @@ export const en = {
   lb_col_rank: "Rank",
   lb_col_user: "User name",
   lb_col_team: "Team",
+  lb_grand_prize_label: "Grand Prize Pool",
+  lb_grand_prize_tagline: "Top predictor wins it all",
+  lb_grand_champion_title: "Grand Prize:",
+  lb_grand_champion_subtitle: "Top predictor wins it all",
 
   // Predictions
   pred_title: "Match Predictions",
@@ -65,6 +92,11 @@ export const en = {
   pred_match: "Match",
   pred_exact_score: "Predict Exact Score (+10 pts bonus)",
   pred_draw: "Draw",
+  pred_prize_label: "Grand Prize Pool",
+  pred_prize_tagline: "Predict & Win",
+  pred_rank_label: "Rank",
+  pred_leader_label: "Leader",
+  pred_you: "(You)",
 
   // Login
   login_title: "Welcome Back",

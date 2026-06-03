@@ -186,9 +186,9 @@ export default function PredictionsPage() {
         }}>
           <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: 'rgba(169,223,0,0.15)', pointerEvents: 'none' }} />
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A9DF00', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>Grand Prize Pool</div>
+            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A9DF00', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>{t('pred_prize_label')}</div>
             <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em' }}>$1,000</div>
-            <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600, marginTop: 2 }}>Predict &amp; Win</div>
+            <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600, marginTop: 2 }}>{t('pred_prize_tagline')}</div>
           </div>
         </div>
 
@@ -217,15 +217,15 @@ export default function PredictionsPage() {
                 {userStanding.rank}
               </div>
               <div>
-                <div style={{ fontWeight: 800, fontSize: '1rem', color: '#111827' }}>{userStanding.full_name} <span style={{ color: '#9CA3AF', fontWeight: 500, fontSize: '0.85rem' }}>(You)</span></div>
+                <div style={{ fontWeight: 800, fontSize: '1rem', color: '#111827' }}>{userStanding.full_name} <span style={{ color: '#9CA3AF', fontWeight: 500, fontSize: '0.85rem' }}>{t('pred_you')}</span></div>
                 <div style={{ fontSize: '0.8rem', color: '#6B7280', fontWeight: 500 }}>
-                  Rank #{userStanding.rank}{topPlayer ? ` · Leader: ${topPlayer.total_points} pts` : ''}
+                  {t('pred_rank_label')} #{userStanding.rank}{topPlayer ? ` · ${t('pred_leader_label')}: ${topPlayer.total_points} ${t('scoring_pts')}` : ''}
                 </div>
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#D4A843' }}>{userStanding.total_points}</div>
-              <div style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 600 }}>pts</div>
+              <div style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 600 }}>{t('scoring_pts')}</div>
             </div>
           </div>
         )}
