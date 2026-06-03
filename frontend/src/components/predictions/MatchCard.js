@@ -145,18 +145,19 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
           style={{
             padding: '12px 8px',
             borderRadius: '20px',
-            border: isSelected('home') ? '1px solid transparent' : '1px solid #E5E7EB',
-            background: isSelected('home') ? 'var(--color-gold)' : '#FFFFFF',
-            color: isSelected('home') ? '#111827' : '#4B5563',
+            border: isSelected('home') ? '2px solid #A9DF00' : '1px solid #E5E7EB',
+            background: isSelected('home') ? '#A9DF00' : '#FFFFFF',
+            color: isSelected('home') ? '#1a2e00' : '#4B5563',
             fontWeight: 700,
             fontSize: '0.9rem',
             cursor: (isLocked || !match.home_team) ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s ease',
-            boxShadow: isSelected('home') ? '0 4px 14px rgba(212, 168, 67, 0.4)' : 'none',
+            boxShadow: isSelected('home') ? '0 4px 16px rgba(169, 223, 0, 0.45)' : 'none',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            transform: isSelected('home') ? 'scale(1.03)' : 'scale(1)'
           }}
         >
           <span style={{ fontSize: '0.7rem', opacity: 0.8, marginBottom: '2px', fontWeight: 600 }}>+ WIN</span>
@@ -169,18 +170,19 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
           style={{
             padding: '12px 8px',
             borderRadius: '20px',
-            border: isSelected('draw') ? '1px solid transparent' : '1px solid #E5E7EB',
-            background: isSelected('draw') ? 'var(--color-gold)' : '#FFFFFF',
-            color: isSelected('draw') ? '#111827' : '#4B5563',
+            border: isSelected('draw') ? '2px solid #5F27E4' : '1px solid #E5E7EB',
+            background: isSelected('draw') ? '#5F27E4' : '#FFFFFF',
+            color: isSelected('draw') ? '#ffffff' : '#4B5563',
             fontWeight: 700,
             fontSize: '0.9rem',
             cursor: (isLocked || !match.home_team) ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s ease',
-            boxShadow: isSelected('draw') ? '0 4px 14px rgba(212, 168, 67, 0.4)' : 'none',
+            boxShadow: isSelected('draw') ? '0 4px 16px rgba(95, 39, 228, 0.4)' : 'none',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            transform: isSelected('draw') ? 'scale(1.03)' : 'scale(1)'
           }}
         >
           <span style={{ fontSize: '0.7rem', opacity: 0.8, marginBottom: '2px', fontWeight: 600 }}>+ WIN</span>
@@ -193,18 +195,19 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
           style={{
             padding: '12px 8px',
             borderRadius: '20px',
-            border: isSelected('away') ? '1px solid transparent' : '1px solid #E5E7EB',
-            background: isSelected('away') ? 'var(--color-gold)' : '#FFFFFF',
-            color: isSelected('away') ? '#111827' : '#4B5563',
+            border: isSelected('away') ? '2px solid #A9DF00' : '1px solid #E5E7EB',
+            background: isSelected('away') ? '#A9DF00' : '#FFFFFF',
+            color: isSelected('away') ? '#1a2e00' : '#4B5563',
             fontWeight: 700,
             fontSize: '0.9rem',
             cursor: (isLocked || !match.away_team) ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s ease',
-            boxShadow: isSelected('away') ? '0 4px 14px rgba(212, 168, 67, 0.4)' : 'none',
+            boxShadow: isSelected('away') ? '0 4px 16px rgba(169, 223, 0, 0.45)' : 'none',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            transform: isSelected('away') ? 'scale(1.03)' : 'scale(1)'
           }}
         >
           <span style={{ fontSize: '0.7rem', opacity: 0.8, marginBottom: '2px', fontWeight: 600 }}>+ WIN</span>
@@ -237,29 +240,7 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
             </div>
           </div>
           
-          {/* Save Pick Button (Visual Confirmation) */}
-          {!isLocked && (
-            <button 
-              onClick={() => alert("Pick selected! Don't forget to submit all predictions at the bottom of the page.")}
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: '24px',
-                background: 'var(--color-gold)',
-                color: '#111827',
-                border: 'none',
-                fontWeight: 700,
-                fontSize: '1.05rem',
-                cursor: 'pointer',
-                transition: 'opacity 0.2s',
-                boxShadow: '0 4px 12px rgba(212, 168, 67, 0.3)'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-            >
-              Save pick
-            </button>
-          )}
+
 
           {savedPrediction && savedPrediction.pointsEarned !== null && savedPrediction.pointsEarned !== undefined && (
             <div style={{ textAlign: 'center', marginTop: 12, color: 'var(--color-gold)', fontWeight: 'bold' }}>

@@ -106,8 +106,8 @@ export const SCORING_TABLE = [
   { round: 'Round of 16', points: 5, exact: 10 },
   { round: 'Quarter-Finals', points: 7, exact: 10 },
   { round: 'Semi-Finals', points: 9, exact: 10 },
-  { round: 'Third Place', points: 10, exact: 10 },
-  { round: 'Final / Tournament Winner', points: 11, exact: 10 },
+  { round: 'Third Place', points: 11, exact: 10 },
+  { round: 'Final / Tournament Winner', points: 13, exact: 10 },
 ];
 
 export const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L'];

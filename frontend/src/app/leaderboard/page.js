@@ -3,29 +3,20 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import Footer from '@/components/layout/Footer';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
 
-function BigRankIcon({ rank }) {
-  const colors = {
-    1: ['#FFD700', '#FDB931'], // Gold
-    2: ['#E0E0E0', '#BDBDBD'], // Silver
-    3: ['#CD7F32', '#A0522D'], // Bronze
-  };
-  const [light, dark] = colors[rank] || ['#939598', '#636568'];
-  
-  return (
-    <div style={{
-      width: 80, height: 80, borderRadius: '50%',
-      background: `linear-gradient(135deg, ${light}, ${dark})`,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: 'white', fontSize: 36, fontWeight: 'bold',
-      boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
-      border: '4px solid white',
-      marginBottom: 10,
-      textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-    }}>
-      {rank}
-    </div>
-  );
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function getShortName(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
 export default function LeaderboardPage() {
@@ -33,9 +24,10 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const { t, locale } = useLanguage();
+  const { user } = useAuth();
 
   const fetchLeaderboard = () => {
-    api.get('/api/leaderboard?limit=100').then(res => {
+    api.get('/api/leaderboard?limit=200').then(res => {
       setLeaders(res.data || []);
     }).catch(() => {}).finally(() => setLoading(false));
   };
@@ -53,28 +45,154 @@ export default function LeaderboardPage() {
   const sortedLeaders = [...filtered].sort((a, b) => a.rank - b.rank);
   const topThree = sortedLeaders.filter(u => u.rank <= 3);
   const restList = sortedLeaders.filter(u => u.rank > 3);
+  const currentUser = user ? leaders.find(u => u.id === user.id) : null;
 
-  // Podium order: Rank 2, Rank 1, Rank 3
-  const rank1 = topThree.find(u => u.rank === 1) || topThree[0];
-  const rank2 = topThree.find(u => u.rank === 2) || topThree[1];
-  const rank3 = topThree.find(u => u.rank === 3) || topThree[2];
+  const rank1 = topThree.find(u => u.rank === 1);
+  const rank2 = topThree.find(u => u.rank === 2);
+  const rank3 = topThree.find(u => u.rank === 3);
 
-  const podiumData = [
-    { user: rank2, rank: 2, height: 160 },
-    { user: rank1, rank: 1, height: 220 },
-    { user: rank3, rank: 3, height: 130 },
-  ];
+  // Podium colors
+  const podiumStyles = {
+    1: { bg: 'linear-gradient(180deg, #FFF8E1 0%, #FFD54F 100%)', border: '#FFD54F', color: '#D4A843', numBg: '#FFD54F', numColor: '#7A5A00' },
+    2: { bg: 'linear-gradient(180deg, #FAFAFA 0%, #E0E0E0 100%)', border: '#E0E0E0', color: '#757575', numBg: '#E0E0E0', numColor: '#424242' },
+    3: { bg: 'linear-gradient(180deg, #FFF3E0 0%, #FFCC80 100%)', border: '#FFCC80', color: '#BF7B3B', numBg: '#FFCC80', numColor: '#6D4C00' },
+  };
+
+  const renderPodiumCard = (userData, rank, isCenter) => {
+    if (!userData) return <div style={{ flex: 1 }} />;
+    const style = podiumStyles[rank];
+    return (
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        marginTop: isCenter ? 0 : 24,
+        position: 'relative'
+      }}>
+        {/* Trophy icon for #1 */}
+        {rank === 1 && (
+          <div style={{ marginBottom: 4 }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7 4V2H17V4H20C20.55 4 21 4.45 21 5V8C21 9.66 19.66 11 18 11H17.24C16.45 13.17 14.42 14.73 12 14.97V18H15V20H9V18H12V14.97C9.58 14.73 7.55 13.17 6.76 11H6C4.34 11 3 9.66 3 8V5C3 4.45 3.45 4 4 4H7ZM5 6V8C5 8.55 5.45 9 6 9H6.29C6.1 8.36 6 7.69 6 7V6H5ZM18 6H19V8C19 8.55 18.55 9 18 9H17.71C17.9 8.36 18 7.69 18 7V6ZM8 4V7C8 9.76 10.24 12 13 12H11C13.76 12 16 9.76 16 7V4H8Z" fill="#D4A843"/>
+            </svg>
+          </div>
+        )}
+        
+        {/* Initials circle */}
+        <div style={{
+          width: isCenter ? 56 : 48,
+          height: isCenter ? 56 : 48,
+          borderRadius: '50%',
+          background: style.numBg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontWeight: 900,
+          fontSize: isCenter ? '1.1rem' : '0.95rem',
+          color: style.numColor,
+          border: `3px solid white`,
+          boxShadow: '0 3px 10px rgba(0,0,0,0.1)',
+          marginBottom: 8
+        }}>
+          {getInitials(userData.full_name)}
+        </div>
+
+        {/* Name */}
+        <div style={{ fontWeight: 700, fontSize: isCenter ? '1rem' : '0.9rem', color: '#111827', textAlign: 'center', marginBottom: 2 }}>
+          {getShortName(userData.full_name)}
+        </div>
+
+        {/* Points */}
+        <div style={{ fontWeight: 800, fontSize: isCenter ? '1.1rem' : '0.95rem', color: style.color, marginBottom: 8 }}>
+          {userData.total_points} pts
+        </div>
+
+        {/* Podium block */}
+        <div style={{
+          background: style.bg,
+          borderRadius: '16px 16px 0 0',
+          width: '100%',
+          minHeight: isCenter ? 90 : 65,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: `1px solid ${style.border}`,
+          borderBottom: 'none',
+          position: 'relative'
+        }}>
+          <div style={{
+            fontSize: isCenter ? '2.8rem' : '2.2rem',
+            fontWeight: 900,
+            color: style.numColor,
+            opacity: 0.6,
+            lineHeight: 1
+          }}>
+            {rank}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
-      <div className="container" style={{ padding: 'var(--space-8) var(--space-6)', minHeight: '80vh' }}>
-        <div className="section-header" style={{ marginBottom: 'var(--space-6)' }}>
-          <h1>{t('lb_title')}</h1>
-          <p>{t('lb_subtitle')}</p>
+      <div className="container" style={{ padding: 'var(--space-6) var(--space-4)', minHeight: '80vh', maxWidth: 600, paddingBottom: currentUser ? 100 : 40 }}>
+        {/* Grand Prize Banner */}
+        <div style={{
+          background: 'linear-gradient(135deg, #5F27E4 0%, #3d1a9e 100%)',
+          borderRadius: 20,
+          padding: '20px 24px',
+          marginBottom: 20,
+          textAlign: 'center',
+          boxShadow: '0 8px 32px rgba(95, 39, 228, 0.4)',
+          position: 'relative',
+          overflow: 'hidden',
+          border: '2px solid #A9DF00'
+        }}>
+          <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: 'rgba(169,223,0,0.15)', pointerEvents: 'none' }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A9DF00', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>Grand Prize Pool</div>
+            <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em' }}>$1,000</div>
+          </div>
         </div>
 
-        <div style={{ maxWidth: 400, margin: '0 auto var(--space-6)' }}>
-          <input className="form-input" placeholder={t('lb_search')} value={search} onChange={e => setSearch(e.target.value)} />
+        {/* Group Champion Banner */}
+        <div style={{
+          background: '#FFFFFF',
+          borderRadius: 16,
+          padding: '14px 18px',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          border: '1px solid #F3F4F6',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #FFD700, #F7B731)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 17.5L6 21L7.5 14.5L2 10H8.5L12 3L15.5 10H22L16.5 14.5L18 21L12 17.5Z" fill="#7A5A00" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827' }}>Grand Prize: <span style={{ fontWeight: 800, color: '#D4A843' }}>$1,000</span></div>
+            <div style={{ fontSize: '0.8rem', color: '#9CA3AF', fontWeight: 500 }}>Top predictor wins it all</div>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div style={{ marginBottom: 20 }}>
+          <input 
+            className="form-input" 
+            placeholder={t('lb_search') || 'Search players...'} 
+            value={search} 
+            onChange={e => setSearch(e.target.value)}
+            style={{ borderRadius: 16, padding: '12px 18px', border: '1px solid #E5E7EB', fontSize: '0.95rem' }}
+          />
         </div>
 
         {loading ? (
@@ -82,80 +200,135 @@ export default function LeaderboardPage() {
             <div className="spinner spinner-lg" style={{ color: 'var(--color-gold)' }} />
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 'var(--space-12)', color: 'var(--color-text-muted)' }}>
-            <p>{t('lb_empty')}</p>
+          <div style={{ textAlign: 'center', padding: 'var(--space-12)', color: '#9CA3AF' }}>
+            <p>{t('lb_empty') || 'No players found'}</p>
           </div>
         ) : (
           <div>
-            {/* Podium for Top 3 */}
+            {/* Podium Top 3 */}
             {!search && topThree.length > 0 && (
-              <div className="podium-container" style={{ direction: 'ltr' }}>
-                {podiumData.map((item, idx) => {
-                  if (!item.user) return <div key={idx} className="podium-column" style={{ opacity: 0 }} />;
-                  return (
-                    <div key={idx} className="podium-column">
-                      <div className="podium-avatar" style={{ position: 'relative' }}>
-                        {item.user.rank === 1 && (
-                          <div style={{
-                            position: 'absolute', top: -20, left: '50%', transform: 'translateX(-50%)',
-                            background: 'var(--color-gold)', color: '#111', padding: '4px 10px', borderRadius: 12,
-                            fontSize: '0.85rem', fontWeight: 'bold', boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
-                            zIndex: 10, whiteSpace: 'nowrap', border: '1px solid #FFD700'
-                          }}>
-                            {locale === 'ar' ? 'جائزة 1000 دولار' : '$1000 Prize'}
-                          </div>
-                        )}
-                        <BigRankIcon rank={item.user.rank} />
-                        <div style={{ fontWeight: 'bold', fontSize: '1.1rem', textAlign: 'center', marginBottom: 10 }}>
-                          {item.user.full_name}
-                        </div>
-                      </div>
-                      <div className={`podium-box`} style={{ height: item.height }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', marginTop: 'var(--space-4)', color: 'var(--color-gold)' }}>
-                          {item.user.total_points}
-                        </div>
-                        <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{t('lb_points')}</div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: 8,
+                marginBottom: 24,
+                padding: '0 8px',
+                direction: 'ltr'
+              }}>
+                {renderPodiumCard(rank2, 2, false)}
+                {renderPodiumCard(rank1, 1, true)}
+                {renderPodiumCard(rank3, 3, false)}
               </div>
             )}
 
-            {/* List for Rest (or everyone if searching) */}
-            {(search ? sortedLeaders : restList).length > 0 && (
-              <div style={{ maxWidth: 800, margin: '0 auto' }}>
-                <div className="leaderboard-list">
-                  <div className="leaderboard-list-header">
-                    <div style={{ width: 40 }}>{t('lb_col_rank')}</div>
-                    <div style={{ flex: 1 }}>{t('lb_col_user')}</div>
-                    <div className="hide-mobile" style={{ flex: 1 }}>{t('lb_col_team')}</div>
-                    <div style={{ width: 80, textAlign: locale === 'ar' ? 'left' : 'right' }}>{t('lb_points')}</div>
-                  </div>
-                  
-                  {(search ? sortedLeaders : restList).map((user) => (
-                    <div className="leaderboard-row" key={user.id}>
-                      <div style={{ width: 40, fontWeight: 'bold', color: 'var(--color-text-muted)' }}>{user.rank}</div>
-                      <div style={{ flex: 1, fontWeight: 600 }}>{user.full_name}</div>
-                      <div className="hide-mobile" style={{ flex: 1 }}>
-                        {user.favorite_team_flag && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <img src={user.favorite_team_flag} alt={user.favorite_team_name || ''} style={{ width: 20, height: 15, borderRadius: 2 }} />
-                            <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--fs-xs)' }}>{user.favorite_team_name}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ width: 80, textAlign: locale === 'ar' ? 'left' : 'right', fontWeight: 'bold', color: 'var(--color-gold)' }}>
-                        {user.total_points}
-                      </div>
+            {/* Rest of leaderboard */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(search ? sortedLeaders : restList).map((entry) => {
+                const isCurrentUser = user && entry.id === user.id;
+                return (
+                  <div key={entry.id} style={{
+                    background: isCurrentUser ? '#FEF2F2' : '#FFFFFF',
+                    borderRadius: 16,
+                    padding: '14px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    border: isCurrentUser ? '2px solid #EF4444' : '1px solid #F3F4F6',
+                    transition: 'all 0.2s ease'
+                  }}>
+                    {/* Rank */}
+                    <div style={{
+                      width: 32,
+                      fontWeight: 900,
+                      fontSize: '1.1rem',
+                      color: isCurrentUser ? '#EF4444' : '#111827'
+                    }}>
+                      {entry.rank}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+
+                    {/* Initials Badge */}
+                    <div style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      background: isCurrentUser ? '#FEE2E2' : '#F3F4F6',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontWeight: 800, fontSize: '0.8rem',
+                      color: isCurrentUser ? '#EF4444' : '#4B5563'
+                    }}>
+                      {getInitials(entry.full_name)}
+                    </div>
+
+                    {/* Name */}
+                    <div style={{ flex: 1, fontWeight: 600, fontSize: '0.95rem', color: '#111827' }}>
+                      {entry.full_name}
+                      {isCurrentUser && <span style={{ color: '#EF4444', fontWeight: 500, fontSize: '0.85rem' }}> (You)</span>}
+                    </div>
+
+                    {/* Points */}
+                    <div style={{
+                      fontWeight: 900,
+                      fontSize: '1.1rem',
+                      color: isCurrentUser ? '#EF4444' : '#111827'
+                    }}>
+                      {entry.total_points} <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#9CA3AF' }}>pts</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
+
+      {/* Sticky Current User Bar at Bottom */}
+      {currentUser && !search && (
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+          padding: '14px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+          maxWidth: 600,
+          margin: '0 auto',
+          borderRadius: '20px 20px 0 0'
+        }}>
+          {/* Rank */}
+          <div style={{ fontWeight: 900, fontSize: '1.3rem', color: 'white', minWidth: 30 }}>
+            {currentUser.rank}
+          </div>
+
+          {/* Initials */}
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 800, fontSize: '0.8rem',
+            color: 'white'
+          }}>
+            {getInitials(currentUser.full_name)}
+          </div>
+
+          {/* Name */}
+          <div style={{ flex: 1 }}>
+            <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'white' }}>
+              {getShortName(currentUser.full_name)}
+            </span>
+            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontWeight: 500 }}> (You)</span>
+          </div>
+
+          {/* Points */}
+          <div style={{ textAlign: 'right' }}>
+            <span style={{ fontWeight: 900, fontSize: '1.3rem', color: 'white' }}>{currentUser.total_points}</span>
+            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600, marginLeft: 4 }}>pts</span>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
   );

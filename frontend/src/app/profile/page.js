@@ -61,7 +61,7 @@ export default function ProfilePage() {
           <div className="stat-card-value" style={{ color: profile.has_submitted_prediction ? 'var(--color-green)' : 'var(--color-warning)' }}>
             {profile.has_submitted_prediction ? 'Yes' : 'No'}
           </div>
-          <div className="stat-card-label">Bracket Submitted</div>
+          <div className="stat-card-label">Prediction Submitted</div>
         </div>
       </div>
 

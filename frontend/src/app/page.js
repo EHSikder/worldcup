@@ -85,7 +85,7 @@ export default function HomePage() {
               <p>{t('step_2_desc')}</p>
             </div>
             <div className="card step-card" style={{ border: '2px solid var(--color-gold)' }}>
-              <div className="step-number" style={{ background: 'var(--color-gold)' }}>3</div>
+              <div className="step-number">3</div>
               <h3 style={{ color: 'var(--color-gold)' }}>Win $1000!</h3>
               <p>Top the leaderboard at the end of the tournament and you walk away with the grand prize of $1000 USD!</p>
             </div>
@@ -100,11 +100,11 @@ export default function HomePage() {
             <h2>{t('scoring_title')}</h2>
             <p>{t('scoring_subtitle')}</p>
           </div>
-          <div className="scoring-highlight" style={{
-            background: 'linear-gradient(135deg, rgba(212, 168, 67, 0.2), rgba(212, 168, 67, 0.05))',
-            border: '2px solid var(--color-gold)',
-            borderRadius: '16px',
-            padding: '24px',
+          <div style={{
+            background: 'linear-gradient(135deg, #5F27E4 0%, #3d1a9e 100%)',
+            border: '2px solid #A9DF00',
+            borderRadius: '20px',
+            padding: '28px 32px',
             marginBottom: '40px',
             maxWidth: '600px',
             margin: '0 auto 40px auto',
@@ -112,11 +112,18 @@ export default function HomePage() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            textAlign: 'center'
+            textAlign: 'center',
+            boxShadow: '0 8px 32px rgba(95, 39, 228, 0.4)',
+            position: 'relative',
+            overflow: 'hidden'
           }}>
-            <h3 style={{ color: 'var(--color-gold)', marginBottom: '8px', fontSize: '1.5rem' }}>Exact Score Bonus</h3>
-            <div className="scoring-points" style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--color-green)' }}>+10 {t('scoring_pts')}</div>
-            <p style={{ color: 'var(--color-text-muted)', marginTop: '8px' }}>Earn bonus points in any round if you predict the exact score perfectly!</p>
+            {/* Glow effect */}
+            <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(169,223,0,0.15)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: -20, left: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(169,223,0,0.1)', pointerEvents: 'none' }} />
+            <h3 style={{ color: '#A9DF00', marginBottom: '8px', fontSize: '1.4rem', fontWeight: 900, letterSpacing: '0.03em', position: 'relative' }}>⚡ Exact Score Bonus</h3>
+            <div style={{ fontSize: '3rem', fontWeight: 900, color: '#ffffff', lineHeight: 1, position: 'relative' }}>+10</div>
+            <div style={{ fontSize: '1rem', fontWeight: 700, color: '#A9DF00', marginBottom: 6, position: 'relative' }}>{t('scoring_pts')}</div>
+            <p style={{ color: 'rgba(255,255,255,0.75)', marginTop: '4px', fontSize: '0.9rem', position: 'relative' }}>Earn bonus points in any round if you predict the exact score perfectly!</p>
           </div>
 
           <div className="scoring-grid">
@@ -173,7 +180,7 @@ export default function HomePage() {
           <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-8)', fontSize: 'var(--fs-lg)', maxWidth: 600, margin: '0 auto var(--space-8)' }}>
             {translations.prize_desc}
           </p>
-          <Link href="/login" className="btn btn-gold btn-xl">
+          <Link href="/login" className="btn-predict" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             {translations.predict_now_btn} <ArrowIcon locale={locale} />
           </Link>
         </div>

@@ -63,14 +63,6 @@ router.post('/', auth, submitPredictionRules, validate, async (req, res, next) =
     const { predictions, champion_prediction_team_id } = req.body;
     const userId = req.user.id;
 
-    // Check if user already submitted
-    if (req.user.has_submitted_prediction) {
-      return res.status(400).json({
-        success: false,
-        message: 'Predictions already submitted. Use PUT to edit.',
-      });
-    }
-
     // Validate all match numbers exist and are knockout matches
     const matchNumbers = predictions.map((p) => p.match_number);
 

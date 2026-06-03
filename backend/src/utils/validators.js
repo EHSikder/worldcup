@@ -44,9 +44,10 @@ const submitPredictionRules = [
     .isArray({ min: 1 })
     .withMessage('Predictions must be a non-empty array'),
   body('predictions.*.match_number')
-    .isInt({ min: 73, max: 104 })
-    .withMessage('Match number must be between 73 and 104'),
+    .isInt({ min: 1, max: 104 })
+    .withMessage('Match number must be between 1 and 104'),
   body('predictions.*.predicted_winner_team_id')
+    .optional({ nullable: true })
     .isUUID()
     .withMessage('predicted_winner_team_id must be a valid UUID'),
   body('predictions.*.predicted_home_score')
