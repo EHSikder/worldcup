@@ -1,140 +1,41 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
 const supabase = require('../config/database');
 const { signUserToken } = require('../utils/jwt');
 const auth = require('../middleware/auth');
-const { authLimiter } = require('../middleware/rateLimit');
-const {
-  registerRules,
-  loginRules,
-  validate,
-} = require('../utils/validators');
+const admin = require('../config/firebase');
 
 /**
- * POST /api/auth/register
- * Register a new user with email and password
+ * POST /api/auth/firebase-login
+ * Receives Firebase ID token, verifies it, and logs the user in if they exist.
  */
-router.post('/register', authLimiter, registerRules, validate, async (req, res, next) => {
+router.post('/firebase-login', async (req, res, next) => {
   try {
-    const { full_name, mobile_number, email, password, civil_id, favorite_team_id } = req.body;
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ success: false, message: 'No token provided' });
 
-    // Check if email already exists
-    const { data: existingEmail } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single();
+    // Verify token
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const { email, name, uid } = decodedToken;
 
-    if (existingEmail) {
-      return res.status(409).json({
-        success: false,
-        message: 'Email already registered.',
-      });
-    }
-
-    // Check if mobile number already exists
-    const { data: existingMobile } = await supabase
-      .from('users')
-      .select('id')
-      .eq('mobile_number', mobile_number)
-      .single();
-
-    if (existingMobile) {
-      return res.status(409).json({
-        success: false,
-        message: 'Mobile number already registered.',
-      });
-    }
-
-    // Hash the password
-    const password_hash = await bcrypt.hash(password, 10);
-
-    // Create user
-    const insertData = {
-      full_name,
-      mobile_number,
-      email,
-      civil_id,
-      password_hash,
-      is_verified: true, // auto-verified with password auth
-    };
-
-    if (favorite_team_id) {
-      insertData.favorite_team_id = favorite_team_id;
-    }
-
+    // Check if user exists
     const { data: user, error } = await supabase
       .from('users')
-      .insert(insertData)
-      .select('id, full_name, email, mobile_number')
-      .single();
-
-    if (error) {
-      if (error.code === '23505') {
-        return res.status(409).json({
-          success: false,
-          message: 'Account already exists with this email or mobile number.',
-        });
-      }
-      throw error;
-    }
-
-    // Generate JWT
-    const token = signUserToken({
-      userId: user.id,
-      email: user.email,
-      tokenVersion: 1,
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Registration successful.',
-      data: {
-        token,
-        user: {
-          id: user.id,
-          full_name: user.full_name,
-          email: user.email,
-          mobile_number: user.mobile_number,
-        },
-      },
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-/**
- * POST /api/auth/login
- * Login with email and password
- */
-router.post('/login', authLimiter, loginRules, validate, async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
-
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('id, full_name, email, mobile_number, password_hash, jwt_token_version')
+      .select('id, full_name, email, mobile_number, jwt_token_version')
       .eq('email', email)
       .single();
 
     if (error || !user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password.',
+      // User doesn't exist, tell frontend to prompt for profile completion
+      return res.json({
+        success: true,
+        requiresProfileCompletion: true,
+        user: { email, name, firebase_uid: uid }
       });
     }
 
-    const isValid = await bcrypt.compare(password, user.password_hash);
-    if (!isValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password.',
-      });
-    }
-
-    const token = signUserToken({
+    // User exists, generate our custom JWT
+    const jwtToken = signUserToken({
       userId: user.id,
       email: user.email,
       tokenVersion: user.jwt_token_version,
@@ -144,7 +45,7 @@ router.post('/login', authLimiter, loginRules, validate, async (req, res, next) 
       success: true,
       message: 'Login successful.',
       data: {
-        token,
+        token: jwtToken,
         user: {
           id: user.id,
           full_name: user.full_name,
@@ -154,7 +55,93 @@ router.post('/login', authLimiter, loginRules, validate, async (req, res, next) 
       },
     });
   } catch (err) {
-    next(err);
+    console.error('Firebase Login Error:', err);
+    res.status(401).json({ success: false, message: 'Invalid Firebase token.' });
+  }
+});
+
+/**
+ * POST /api/auth/complete-profile
+ * Creates a new user after Google Sign-in with additional profile info.
+ */
+router.post('/complete-profile', async (req, res, next) => {
+  try {
+    const { token, mobile_number, civil_id, favorite_team_id } = req.body;
+    if (!token || !mobile_number || !civil_id || !favorite_team_id) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    // Verify token again to ensure identity
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const { email, name, uid } = decodedToken;
+
+    // Double check email isn't already taken
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (existingUser) {
+      return res.status(409).json({ success: false, message: 'Account already exists' });
+    }
+
+    // Check if mobile number is taken
+    const { data: existingMobile } = await supabase
+      .from('users')
+      .select('id')
+      .eq('mobile_number', mobile_number)
+      .single();
+
+    if (existingMobile) {
+      return res.status(409).json({ success: false, message: 'Mobile number already registered.' });
+    }
+
+    // Create user
+    const insertData = {
+      full_name: name || 'User',
+      email,
+      firebase_uid: uid,
+      mobile_number,
+      civil_id,
+      favorite_team_id,
+      is_verified: true, // Google accounts are pre-verified
+    };
+
+    const { data: user, error } = await supabase
+      .from('users')
+      .insert(insertData)
+      .select('id, full_name, email, mobile_number, jwt_token_version')
+      .single();
+
+    if (error) {
+      console.error('Insert Error:', error);
+      return res.status(500).json({ success: false, message: 'Failed to create account.' });
+    }
+
+    // Generate JWT
+    const jwtToken = signUserToken({
+      userId: user.id,
+      email: user.email,
+      tokenVersion: user.jwt_token_version,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful.',
+      data: {
+        token: jwtToken,
+        user: {
+          id: user.id,
+          full_name: user.full_name,
+          email: user.email,
+          mobile_number: user.mobile_number,
+        },
+      },
+    });
+  } catch (err) {
+    console.error('Complete Profile Error:', err);
+    res.status(401).json({ success: false, message: 'Authentication failed.' });
   }
 });
 
@@ -167,16 +154,8 @@ router.get('/me', auth, async (req, res, next) => {
     const { data: user, error } = await supabase
       .from('users')
       .select(`
-        id,
-        full_name,
-        mobile_number,
-        email,
-        civil_id,
-        favorite_team_id,
-        is_verified,
-        has_submitted_prediction,
-        total_points,
-        created_at
+        id, full_name, mobile_number, email, civil_id, favorite_team_id,
+        is_verified, has_submitted_prediction, total_points, created_at, firebase_uid
       `)
       .eq('id', req.user.id)
       .single();

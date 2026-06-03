@@ -1,6 +1,11 @@
+import { Inter, Cairo } from 'next/font/google';
 import { AuthProvider } from '@/context/AuthContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 import ConditionalHeader from '@/components/layout/ConditionalHeader';
 import './globals.css';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const cairo = Cairo({ subsets: ['arabic'], variable: '--font-cairo' });
 
 export const metadata = {
   title: 'R BUILD Predictor — Win With Our Program',
@@ -15,16 +20,18 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html suppressHydrationWarning className={`${inter.variable} ${cairo.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#26445F" />
       </head>
       <body>
-        <AuthProvider>
-          <ConditionalHeader />
-          <main>{children}</main>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <ConditionalHeader />
+            <main>{children}</main>
+          </AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

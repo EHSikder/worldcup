@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 function TrophyIcon() {
   return (
@@ -29,6 +30,7 @@ function CloseIcon() {
 
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { t, toggleLanguage, locale } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -41,25 +43,28 @@ export default function Header() {
         </Link>
 
         <nav className="header-nav">
-          <Link href="/">Home</Link>
-          <Link href="/bracket">Bracket</Link>
-          <Link href="/leaderboard">Leaderboard</Link>
+          <Link href="/">{t('nav_home')}</Link>
+          <Link href="/predictions">{t('nav_predictions')}</Link>
+          <Link href="/leaderboard">{t('nav_leaderboard')}</Link>
         </nav>
 
         <div className="header-actions">
+          <button onClick={toggleLanguage} className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontWeight: 'bold' }}>
+            {t('nav_language')}
+          </button>
+          
           {isAuthenticated ? (
             <>
               <Link href="/profile" className="btn btn-ghost btn-sm" style={{ color: 'var(--color-gold)' }}>
                 {user?.full_name}
               </Link>
               <button className="btn btn-ghost btn-sm" onClick={logout}>
-                Logout
+                {t('nav_sign_out')}
               </button>
             </>
           ) : (
             <>
-              <Link href="/login" className="btn btn-ghost btn-sm">Login</Link>
-              <Link href="/register" className="btn btn-primary btn-sm">Sign Up</Link>
+              <Link href="/login" className="btn btn-primary btn-sm">{t('nav_sign_in')}</Link>
             </>
           )}
           <button className="mobile-menu-btn" onClick={() => setMobileOpen(true)} aria-label="Open menu">
@@ -72,28 +77,29 @@ export default function Header() {
         <>
           <div className="mobile-nav-overlay" onClick={() => setMobileOpen(false)} />
           <div className="mobile-nav">
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <button onClick={toggleLanguage} className="btn btn-ghost" style={{ padding: '4px 8px', fontWeight: 'bold' }}>
+                {t('nav_language')}
+              </button>
               <button className="mobile-menu-btn" onClick={() => setMobileOpen(false)} aria-label="Close menu">
                 <CloseIcon />
               </button>
             </div>
-            <Link href="/" onClick={() => setMobileOpen(false)}>Home</Link>
-            <Link href="/bracket" onClick={() => setMobileOpen(false)}>Bracket</Link>
-            <Link href="/leaderboard" onClick={() => setMobileOpen(false)}>Leaderboard</Link>
+            <Link href="/" onClick={() => setMobileOpen(false)}>{t('nav_home')}</Link>
+            <Link href="/predictions" onClick={() => setMobileOpen(false)}>{t('nav_predictions')}</Link>
+            <Link href="/leaderboard" onClick={() => setMobileOpen(false)}>{t('nav_leaderboard')}</Link>
             {isAuthenticated ? (
               <>
-                <Link href="/profile" onClick={() => setMobileOpen(false)}>My Profile</Link>
                 <button
                   onClick={() => { logout(); setMobileOpen(false); }}
-                  style={{ padding: '0.75rem 1rem', color: 'var(--color-primary-red)', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: '1.125rem', fontFamily: 'var(--font-body)' }}
+                  style={{ padding: '0.75rem 1rem', color: 'var(--color-primary-red)', background: 'none', border: 'none', textAlign: locale === 'ar' ? 'right' : 'left', cursor: 'pointer', fontSize: '1.125rem', fontFamily: 'var(--font-body)' }}
                 >
-                  Logout
+                  {t('nav_sign_out')}
                 </button>
               </>
             ) : (
               <>
-                <Link href="/login" onClick={() => setMobileOpen(false)}>Login</Link>
-                <Link href="/register" onClick={() => setMobileOpen(false)}>Sign Up</Link>
+                <Link href="/login" onClick={() => setMobileOpen(false)}>{t('nav_sign_in')}</Link>
               </>
             )}
           </div>

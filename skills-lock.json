@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "design-website/SKILL.md",
       "computedHash": "6d203b9cde2fdaf6dd35525f187d3934a7862d223577c6c955d2b4a0975926a2"
+    },
+    "firebase-auth-basics": {
+      "source": "firebase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/firebase-auth-basics/SKILL.md",
+      "computedHash": "87ffefcaa1934070f3f91977588ec82fde38a75cbc41919df6fe0a0c83acc90d"
     }
   }
 }

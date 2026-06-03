@@ -103,10 +103,10 @@ export const R32_MATCH_INFO = {
 export const SCORING_TABLE = [
   { round: 'Round of 32', winner: 1, score: 3 },
   { round: 'Round of 16', winner: 2, score: 5 },
-  { round: 'Quarterfinals', winner: 10, score: 15 },
-  { round: 'Semifinals', winner: 20, score: 30 },
+  { round: 'Quarter-Finals', winner: 10, score: 15 },
+  { round: 'Semi-Finals', winner: 20, score: 30 },
+  { round: 'Third Place', winner: 10, score: 20 },
   { round: 'Final', winner: 30, score: 50 },
-  { round: 'Champion', winner: 50, score: null },
 ];
 
 export const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L'];

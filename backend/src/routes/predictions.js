@@ -16,8 +16,6 @@ router.get('/', auth, async (req, res, next) => {
         id,
         match_number,
         predicted_winner_team_id,
-        predicted_home_team_id,
-        predicted_away_team_id,
         predicted_home_score,
         predicted_away_score,
         is_locked,
@@ -114,8 +112,6 @@ router.post('/', auth, submitPredictionRules, validate, async (req, res, next) =
           user_id: userId,
           match_number: pred.match_number,
           predicted_winner_team_id: pred.predicted_winner_team_id,
-          predicted_home_team_id: pred.predicted_home_team_id || null,
-          predicted_away_team_id: pred.predicted_away_team_id || null,
           predicted_home_score: pred.predicted_home_score,
           predicted_away_score: pred.predicted_away_score,
         });
@@ -234,8 +230,6 @@ router.put('/', auth, submitPredictionRules, validate, async (req, res, next) =>
           .from('predictions')
           .update({
             predicted_winner_team_id: pred.predicted_winner_team_id,
-            predicted_home_team_id: pred.predicted_home_team_id || null,
-            predicted_away_team_id: pred.predicted_away_team_id || null,
             predicted_home_score: pred.predicted_home_score,
             predicted_away_score: pred.predicted_away_score,
           })
@@ -251,8 +245,6 @@ router.put('/', auth, submitPredictionRules, validate, async (req, res, next) =>
             user_id: userId,
             match_number: pred.match_number,
             predicted_winner_team_id: pred.predicted_winner_team_id,
-            predicted_home_team_id: pred.predicted_home_team_id || null,
-            predicted_away_team_id: pred.predicted_away_team_id || null,
             predicted_home_score: pred.predicted_home_score,
             predicted_away_score: pred.predicted_away_score,
           });

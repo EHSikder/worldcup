@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Footer from '@/components/layout/Footer';
 import { SCORING_TABLE, GROUPS } from '@/lib/constants';
 import api from '@/lib/api';
+import { useLanguage } from '@/context/LanguageContext';
 
 function TrophyHeroIcon() {
   return (
@@ -13,9 +14,9 @@ function TrophyHeroIcon() {
   );
 }
 
-function ArrowRightIcon() {
+function ArrowIcon({ locale }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20" style={{ transform: locale === 'ar' ? 'rotate(180deg)' : 'none' }}>
       <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
@@ -23,6 +24,7 @@ function ArrowRightIcon() {
 
 export default function HomePage() {
   const [teams, setTeams] = useState([]);
+  const { t, locale } = useLanguage();
 
   useEffect(() => {
     api.get('/api/teams').then(res => {
@@ -35,26 +37,33 @@ export default function HomePage() {
     teams: teams.filter(t => t.group_letter === g),
   }));
 
+  const translations = {
+    prize_title: locale === 'ar' ? 'هل تريد التوقع والفوز بـ 1000 دولار؟' : 'Want to Predict and Win $1000?',
+    prize_desc: locale === 'ar' ? 'كن صاحب المركز الأول على مستوى العالم في نهاية البطولة واربح الجائزة الكبرى!' : 'Be the #1 worldwide ranker at the end of the tournament and take home the grand prize!',
+    predict_now_btn: locale === 'ar' ? 'توقع الآن' : 'Predict Now',
+    hero_prize: locale === 'ar' ? 'المركز الأول يربح 1000 دولار 💰' : '1st Place Wins $1000 💰',
+  };
+
   return (
     <>
       {/* Hero */}
       <section className="hero">
         <div className="hero-content">
-          <div className="hero-badge">
-            R BUILD Prediction Challenge
+          <div className="hero-badge" style={{ display: 'inline-flex', gap: '8px', background: 'var(--color-primary-red)', padding: '6px 16px', borderRadius: 20, fontWeight: 'bold' }}>
+            <span>{translations.hero_prize}</span>
           </div>
-          <h1>Predict the Tournament Champion</h1>
+          <h1>{t('hero_title')}</h1>
           <p>
-            Fill your knockout bracket from the Round of 32 to the Final.
-            Predict match winners, guess exact scores, and compete against colleagues and friends
-            as real results roll in.
+            {t('hero_desc_1')}
+            <br /><br />
+            <span style={{ color: 'var(--color-gold)', fontSize: '1.2em', fontWeight: 'bold' }}>{t('hero_desc_2')}</span>
           </p>
           <div className="hero-cta">
-            <Link href="/register" className="btn btn-primary btn-xl">
-              Start Predicting <ArrowRightIcon />
+            <Link href="/login" className="btn btn-primary btn-xl">
+              {t('hero_cta_primary')} <ArrowIcon locale={locale} />
             </Link>
             <Link href="/leaderboard" className="btn btn-secondary btn-xl">
-              View Leaderboard
+              {t('hero_cta_secondary')}
             </Link>
           </div>
         </div>
@@ -64,24 +73,24 @@ export default function HomePage() {
       <section className="section" style={{ background: 'var(--color-surface-dark)' }}>
         <div className="container">
           <div className="section-header">
-            <h2>How It Works</h2>
-            <p>Three simple steps to join the prediction challenge</p>
+            <h2>{t('steps_title')}</h2>
+            <p>{t('steps_subtitle')}</p>
           </div>
           <div className="steps-grid">
             <div className="card step-card">
               <div className="step-number">1</div>
-              <h3>Create Your Account</h3>
-              <p>Register with your name, mobile number, and email. Verify your number with a one-time code to secure your account.</p>
+              <h3>{t('step_1_title')}</h3>
+              <p>{t('step_1_desc')}</p>
             </div>
             <div className="card step-card">
               <div className="step-number">2</div>
-              <h3>Fill Your Bracket</h3>
-              <p>Predict winners for every knockout match from the Round of 32 through the Final. Add score predictions for bonus points.</p>
+              <h3>{t('step_2_title')}</h3>
+              <p>{t('step_2_desc')}</p>
             </div>
-            <div className="card step-card">
-              <div className="step-number">3</div>
-              <h3>Earn Points</h3>
-              <p>Watch your predictions come alive as real matches unfold. Earn points for correct picks and climb the global leaderboard.</p>
+            <div className="card step-card" style={{ border: '2px solid var(--color-gold)' }}>
+              <div className="step-number" style={{ background: 'var(--color-gold)' }}>3</div>
+              <h3 style={{ color: 'var(--color-gold)' }}>Win $1000!</h3>
+              <p>Top the leaderboard at the end of the tournament and you walk away with the grand prize of $1000 USD!</p>
             </div>
           </div>
         </div>
@@ -91,21 +100,21 @@ export default function HomePage() {
       <section className="section">
         <div className="container">
           <div className="section-header">
-            <h2>Scoring System</h2>
-            <p>Higher stakes in later rounds mean bigger rewards for bold predictions</p>
+            <h2>{t('scoring_title')}</h2>
+            <p>{t('scoring_subtitle')}</p>
           </div>
           <div className="scoring-grid">
             {SCORING_TABLE.map((item) => (
               <div className="scoring-card" key={item.round}>
                 <div className="scoring-round">{item.round}</div>
-                <div className="scoring-points">{item.winner} pts</div>
-                <div className="scoring-label">Correct Winner</div>
+                <div className="scoring-points">{item.winner} {t('scoring_pts')}</div>
+                <div className="scoring-label">{t('scoring_winner')}</div>
                 {item.score && (
                   <>
                     <div className="scoring-points" style={{ fontSize: 'var(--fs-xl)', marginTop: 'var(--space-2)', color: 'var(--color-green)' }}>
-                      {item.score} pts
+                      {item.score} {t('scoring_pts')}
                     </div>
-                    <div className="scoring-label">Exact Score</div>
+                    <div className="scoring-label">{t('scoring_exact')}</div>
                   </>
                 )}
               </div>
@@ -118,13 +127,13 @@ export default function HomePage() {
       <section className="section" style={{ background: 'var(--color-surface-dark)' }}>
         <div className="container">
           <div className="section-header">
-            <h2>The 48 Teams</h2>
-            <p>12 groups of 4 teams compete in the biggest World Cup ever held</p>
+            <h2>{t('teams_title')}</h2>
+            <p>{t('teams_subtitle')}</p>
           </div>
           <div className="groups-grid">
             {groupedTeams.map(group => (
               <div className="group-card" key={group.letter}>
-                <div className="group-card-header">Group {group.letter}</div>
+                <div className="group-card-header">{t('group')} {group.letter}</div>
                 <div className="group-card-body">
                   {group.teams.length > 0 ? group.teams.map(team => (
                     <div className="group-team-row" key={team.id}>
@@ -146,15 +155,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="section" style={{ textAlign: 'center' }}>
+      {/* CTA -> Prizes Section */}
+      <section className="section" style={{ textAlign: 'center', background: 'linear-gradient(to top, rgba(212,168,67,0.1), transparent)' }}>
         <div className="container">
-          <h2 style={{ marginBottom: 'var(--space-4)' }}>Ready to Make Your Predictions?</h2>
-          <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-8)', fontSize: 'var(--fs-lg)' }}>
-            Join thousands of football fans competing for bragging rights and leaderboard glory.
+          <TrophyHeroIcon />
+          <h2 style={{ marginBottom: 'var(--space-4)', color: 'var(--color-gold)', marginTop: 'var(--space-4)' }}>
+            {translations.prize_title}
+          </h2>
+          <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-8)', fontSize: 'var(--fs-lg)', maxWidth: 600, margin: '0 auto var(--space-8)' }}>
+            {translations.prize_desc}
           </p>
-          <Link href="/register" className="btn btn-gold btn-xl">
-            Create Your Bracket Now <ArrowRightIcon />
+          <Link href="/login" className="btn btn-gold btn-xl">
+            {translations.predict_now_btn} <ArrowIcon locale={locale} />
           </Link>
         </div>
       </section>
