@@ -103,20 +103,31 @@ export default function HomePage() {
             <h2>{t('scoring_title')}</h2>
             <p>{t('scoring_subtitle')}</p>
           </div>
+          <div className="scoring-highlight" style={{
+            background: 'linear-gradient(135deg, rgba(212, 168, 67, 0.2), rgba(212, 168, 67, 0.05))',
+            border: '2px solid var(--color-gold)',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '40px',
+            maxWidth: '600px',
+            margin: '0 auto 40px auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ color: 'var(--color-gold)', marginBottom: '8px', fontSize: '1.5rem' }}>Exact Score Bonus</h3>
+            <div className="scoring-points" style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--color-green)' }}>+10 {t('scoring_pts')}</div>
+            <p style={{ color: 'var(--color-text-muted)', marginTop: '8px' }}>Earn bonus points in any round if you predict the exact score perfectly!</p>
+          </div>
+
           <div className="scoring-grid">
             {SCORING_TABLE.map((item) => (
-              <div className="scoring-card" key={item.round} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', minHeight: '180px' }}>
-                <div className="scoring-round" style={{ marginBottom: '16px' }}>{item.round}</div>
-                
-                <div className="scoring-points" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{item.points} {t('scoring_pts')}</div>
-                <div className="scoring-label" style={{ marginBottom: '16px', color: 'var(--color-text-muted)' }}>per correct winner</div>
-                
-                {item.exact && (
-                  <>
-                    <div className="scoring-points" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-green)' }}>+{item.exact} {t('scoring_pts')}</div>
-                    <div className="scoring-label" style={{ color: 'var(--color-text-muted)' }}>for exact score</div>
-                  </>
-                )}
+              <div className="scoring-card" key={item.round} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', minHeight: '140px' }}>
+                <div className="scoring-round" style={{ marginBottom: '16px', fontSize: '1.1rem' }}>{item.round}</div>
+                <div className="scoring-points" style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{item.points}</div>
+                <div className="scoring-label" style={{ marginTop: '8px', color: 'var(--color-text-muted)' }}>{t('scoring_pts')}</div>
               </div>
             ))}
           </div>
