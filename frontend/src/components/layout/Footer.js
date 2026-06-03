@@ -13,22 +13,6 @@ export default function Footer() {
 
   return (
     <footer className="footer">
-      <div className="partners-banner">
-        <div className="container">
-          <div className="partners-grid">
-            {partners.map(partner => (
-              <img 
-                key={partner.name}
-                src={partner.src} 
-                alt={partner.name} 
-                title={partner.name}
-                className="partner-logo"
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
       <div className="container" style={{ padding: '3rem 0' }}>
         <div className="footer-grid">
           <div className="footer-brand">

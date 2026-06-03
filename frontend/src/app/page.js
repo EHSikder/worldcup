@@ -107,16 +107,8 @@ export default function HomePage() {
             {SCORING_TABLE.map((item) => (
               <div className="scoring-card" key={item.round}>
                 <div className="scoring-round">{item.round}</div>
-                <div className="scoring-points">{item.winner} {t('scoring_pts')}</div>
-                <div className="scoring-label">{t('scoring_winner')}</div>
-                {item.score && (
-                  <>
-                    <div className="scoring-points" style={{ fontSize: 'var(--fs-xl)', marginTop: 'var(--space-2)', color: 'var(--color-green)' }}>
-                      {item.score} {t('scoring_pts')}
-                    </div>
-                    <div className="scoring-label">{t('scoring_exact')}</div>
-                  </>
-                )}
+                <div className="scoring-points">{item.points} {t('scoring_pts')}</div>
+                <div className="scoring-label">per correct prediction</div>
               </div>
             ))}
           </div>

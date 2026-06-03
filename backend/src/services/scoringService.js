@@ -140,7 +140,7 @@ async function recalculateUserPoints(userId) {
  * Awards 50 points if predicted champion matches the actual winner
  */
 async function scoreChampionPredictions(actualChampionTeamId) {
-  const CHAMPION_POINTS = 50;
+  const CHAMPION_POINTS = 11;
 
   // Get all champion predictions
   const { data: predictions, error } = await supabase
