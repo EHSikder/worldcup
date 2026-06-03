@@ -12,22 +12,31 @@ async function fetchAllFixtures() {
   }
 
   try {
-    const response = await axios.get(`${BASE_URL}/fixtures`, {
-      params: { key: env.API_FOOTBALL_KEY } // we're reusing the env variable name for simplicity
-    });
+    let allFixtures = [];
+    let page = 1;
     
-    // The api returns an array of fixtures directly (based on docs example)
-    // Actually the docs say it might return JSON:
-    // { "success": true, "data": [...] } or just [...]
-    // We'll handle both cases
-    if (response.data && response.data.success !== undefined) {
-      if (!response.data.success) {
-        throw new Error(response.data.error || 'Failed to fetch fixtures');
+    while (true) {
+      const response = await axios.get(`${BASE_URL}/fixtures`, {
+        params: { key: env.API_FOOTBALL_KEY, page }
+      });
+      
+      let fixtures = [];
+      if (response.data && response.data.success !== undefined) {
+        if (!response.data.success) {
+          throw new Error(response.data.error || 'Failed to fetch fixtures');
+        }
+        fixtures = response.data.data;
+      } else {
+        fixtures = Array.isArray(response.data) ? response.data : [];
       }
-      return response.data.data;
+      
+      if (!fixtures || fixtures.length === 0) break;
+      
+      allFixtures = allFixtures.concat(fixtures);
+      page++;
     }
     
-    return Array.isArray(response.data) ? response.data : [];
+    return allFixtures;
   } catch (err) {
     console.error('Error fetching fixtures from WorldCupAPI:', err.message);
     throw err;

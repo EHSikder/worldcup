@@ -7,7 +7,6 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
   const [isLockedLocal, setIsLockedLocal] = useState(false);
 
   useEffect(() => {
-    // Check if match starts in less than 5 minutes
     if (match.kickoff_time) {
       const matchTime = new Date(match.kickoff_time).getTime();
       const now = new Date().getTime();
@@ -23,35 +22,31 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
   
   const homeTeamName = match.home_team?.name || match.home_placeholder || 'TBD';
   const awayTeamName = match.away_team?.name || match.away_placeholder || 'TBD';
-  const homeFlag = match.home_team?.flag_url || 'https://flagcdn.com/w80/xx.png'; // placeholder flag
+  const homeFlag = match.home_team?.flag_url || 'https://flagcdn.com/w80/xx.png';
   const awayFlag = match.away_team?.flag_url || 'https://flagcdn.com/w80/xx.png';
 
   const handleWinnerClick = (winner) => {
-    if (isLocked) return;
+    if (isLocked || !match.home_team || !match.away_team) return;
     
-    // You can't predict if the teams aren't known yet
-    if (!match.home_team || !match.away_team) {
-      alert('Teams for this match are not decided yet!');
-      return;
-    }
-
     if (prediction?.winner !== winner) {
       onPredict(match.match_number, { 
         ...prediction, 
         winner, 
-        homeScore: prediction?.homeScore || '', 
-        awayScore: prediction?.awayScore || '' 
+        homeScore: prediction?.homeScore || '0', 
+        awayScore: prediction?.awayScore || '0' 
       });
     } else {
       onPredict(match.match_number, null);
     }
   };
 
-  const handleScoreChange = (side, value) => {
+  const updateScore = (side, delta) => {
     if (isLocked) return;
+    const currentScore = parseInt(prediction?.[`${side}Score`] || '0', 10);
+    const newScore = Math.max(0, currentScore + delta);
     onPredict(match.match_number, {
       ...prediction,
-      [`${side}Score`]: value.replace(/[^0-9]/g, '')
+      [`${side}Score`]: newScore.toString()
     });
   };
 
@@ -59,13 +54,13 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
   const showLiveScore = match.status === 'live' || match.status === 'finished' || match.status === 'halftime' || match.status === 'extra_time' || match.status === 'penalties';
 
   const stageTranslations = {
-    'group_stage': locale === 'ar' ? 'مرحلة المجموعات' : 'Group Stage',
-    'round_of_32': locale === 'ar' ? 'دور الـ 32' : 'Round of 32',
-    'round_of_16': locale === 'ar' ? 'دور الـ 16' : 'Round of 16',
-    'quarterfinal': locale === 'ar' ? 'ربع النهائي' : 'Quarter-Finals',
-    'semifinal': locale === 'ar' ? 'نصف النهائي' : 'Semi-Finals',
-    'third_place': locale === 'ar' ? 'المركز الثالث' : 'Third Place',
-    'final': locale === 'ar' ? 'النهائي' : 'Final',
+    'group_stage': locale === 'ar' ? 'مرحلة المجموعات' : 'GROUP STAGE',
+    'round_of_32': locale === 'ar' ? 'دور الـ 32' : 'ROUND OF 32',
+    'round_of_16': locale === 'ar' ? 'دور الـ 16' : 'ROUND OF 16',
+    'quarterfinal': locale === 'ar' ? 'ربع النهائي' : 'QUARTER-FINALS',
+    'semifinal': locale === 'ar' ? 'نصف النهائي' : 'SEMI-FINALS',
+    'third_place': locale === 'ar' ? 'المركز الثالث' : 'THIRD PLACE',
+    'final': locale === 'ar' ? 'النهائي' : 'FINAL',
   };
 
   const statusTranslations = {
@@ -81,14 +76,19 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
     <div className={`card match-card ${isLocked ? 'locked' : ''}`} style={{ 
       marginBottom: 'var(--space-4)', 
       transition: 'all 0.3s ease',
-      border: showLiveScore ? '1px solid var(--color-gold)' : undefined
+      borderRadius: '24px',
+      padding: '24px',
+      border: showLiveScore ? '1px solid var(--color-gold)' : '1px solid #EBEBEC',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+      backgroundColor: '#FFFFFF',
+      opacity: isLocked ? 0.8 : 1
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-muted)', fontSize: 'var(--fs-xs)', marginBottom: 'var(--space-3)' }}>
-        <span style={{ fontWeight: 600, color: 'var(--color-gold)' }}>
-          {t('pred_match') || 'Match'} {match.match_number} &bull; {stageTranslations[match.round]} 
-          {isLocked && <span style={{ marginLeft: 8, color: 'var(--color-primary-red)' }}>&#128274; Locked</span>}
+      {/* Top Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <span style={{ fontWeight: 600, color: '#8899B4', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
+          {stageTranslations[match.round]} {isLocked && <span style={{ color: 'var(--color-primary-red)', marginLeft: 8 }}>&#128274;</span>}
         </span>
-        <span dir="ltr">
+        <span style={{ background: '#F3F4F6', padding: '4px 12px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700, color: '#111827' }} dir="ltr">
           {match.kickoff_time 
             ? new Date(match.kickoff_time).toLocaleString(locale === 'ar' ? 'ar-EG' : 'en-US', { timeZone: 'Asia/Kuwait', weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
             : 'TBD'
@@ -96,11 +96,12 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
         </span>
       </div>
       
+      {/* Live Score Header (If active) */}
       {showLiveScore && (
-        <div style={{ textAlign: 'center', marginBottom: 12 }}>
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <span style={{ 
             background: match.status === 'live' ? 'var(--color-primary-red)' : 'var(--color-surface-light)',
-            color: 'white',
+            color: match.status === 'live' ? 'white' : 'var(--color-text-secondary)',
             padding: '2px 8px',
             borderRadius: 12,
             fontSize: '10px',
@@ -112,82 +113,154 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
           <div style={{ fontSize: '1.5rem', fontWeight: 'bold', marginTop: 4, letterSpacing: 2 }}>
             {match.home_score ?? 0} - {match.away_score ?? 0}
           </div>
-          {(match.home_penalty_score !== null || match.home_extra_time_score !== null) && (
-            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: 2 }}>
-              {match.home_penalty_score !== null ? `(PEN: ${match.home_penalty_score}-${match.away_penalty_score})` : `(ET: ${match.home_extra_time_score}-${match.away_extra_time_score})`}
-            </div>
-          )}
         </div>
       )}
       
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 'var(--space-2)', alignItems: 'stretch' }}>
+      {/* Teams Area */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', padding: '0 10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', border: '1px solid #F3F4F6', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', marginBottom: 12 }}>
+            <img src={homeFlag} alt={homeTeamName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#111827', textAlign: 'center' }}>{homeTeamName}</span>
+        </div>
+
+        <div style={{ background: '#F9FAFB', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem', color: '#111827' }}>
+          VS
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', border: '1px solid #F3F4F6', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', marginBottom: 12 }}>
+            <img src={awayFlag} alt={awayTeamName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#111827', textAlign: 'center' }}>{awayTeamName}</span>
+        </div>
+      </div>
+
+      {/* Winner Selector Buttons */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: prediction?.winner ? '24px' : '0' }}>
         <button 
           onClick={() => handleWinnerClick('home')}
-          className={`btn ${isSelected('home') ? 'btn-primary' : 'btn-ghost'}`}
           disabled={isLocked || !match.home_team}
-          style={{ padding: 'var(--space-3)', height: 'auto', display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center', flex: 1, opacity: (!match.home_team || isLocked) ? 0.6 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
+          style={{
+            padding: '12px 8px',
+            borderRadius: '20px',
+            border: isSelected('home') ? '1px solid transparent' : '1px solid #E5E7EB',
+            background: isSelected('home') ? 'var(--color-gold)' : '#FFFFFF',
+            color: isSelected('home') ? '#111827' : '#4B5563',
+            fontWeight: 700,
+            fontSize: '0.9rem',
+            cursor: (isLocked || !match.home_team) ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: isSelected('home') ? '0 4px 14px rgba(212, 168, 67, 0.4)' : 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
         >
-          <img src={homeFlag} alt={homeTeamName} width="40" height="26" style={{ borderRadius: 2, objectFit: 'cover', opacity: match.home_team ? 1 : 0.3 }} />
-          <span style={{ fontSize: 'var(--fs-sm)', textAlign: 'center', lineHeight: 1.2 }}>{homeTeamName}</span>
+          <span style={{ fontSize: '0.7rem', opacity: 0.8, marginBottom: '2px', fontWeight: 600 }}>+ WIN</span>
+          <span style={{ textAlign: 'center', lineHeight: 1.1 }}>{homeTeamName}</span>
         </button>
 
         <button 
           onClick={() => handleWinnerClick('draw')}
-          className={`btn ${isSelected('draw') ? 'btn-primary' : 'btn-ghost'}`}
           disabled={isLocked || !match.home_team}
-          style={{ padding: 'var(--space-3)', minWidth: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isLocked ? 0.6 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
+          style={{
+            padding: '12px 8px',
+            borderRadius: '20px',
+            border: isSelected('draw') ? '1px solid transparent' : '1px solid #E5E7EB',
+            background: isSelected('draw') ? 'var(--color-gold)' : '#FFFFFF',
+            color: isSelected('draw') ? '#111827' : '#4B5563',
+            fontWeight: 700,
+            fontSize: '0.9rem',
+            cursor: (isLocked || !match.home_team) ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: isSelected('draw') ? '0 4px 14px rgba(212, 168, 67, 0.4)' : 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
         >
-          {t('pred_draw') || 'Draw'}
+          <span style={{ fontSize: '0.7rem', opacity: 0.8, marginBottom: '2px', fontWeight: 600 }}>+ WIN</span>
+          <span>{t('pred_draw') || 'Draw'}</span>
         </button>
 
         <button 
           onClick={() => handleWinnerClick('away')}
-          className={`btn ${isSelected('away') ? 'btn-primary' : 'btn-ghost'}`}
           disabled={isLocked || !match.away_team}
-          style={{ padding: 'var(--space-3)', height: 'auto', display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center', flex: 1, opacity: (!match.away_team || isLocked) ? 0.6 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
+          style={{
+            padding: '12px 8px',
+            borderRadius: '20px',
+            border: isSelected('away') ? '1px solid transparent' : '1px solid #E5E7EB',
+            background: isSelected('away') ? 'var(--color-gold)' : '#FFFFFF',
+            color: isSelected('away') ? '#111827' : '#4B5563',
+            fontWeight: 700,
+            fontSize: '0.9rem',
+            cursor: (isLocked || !match.away_team) ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: isSelected('away') ? '0 4px 14px rgba(212, 168, 67, 0.4)' : 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
         >
-          <img src={awayFlag} alt={awayTeamName} width="40" height="26" style={{ borderRadius: 2, objectFit: 'cover', opacity: match.away_team ? 1 : 0.3 }} />
-          <span style={{ fontSize: 'var(--fs-sm)', textAlign: 'center', lineHeight: 1.2 }}>{awayTeamName}</span>
+          <span style={{ fontSize: '0.7rem', opacity: 0.8, marginBottom: '2px', fontWeight: 600 }}>+ WIN</span>
+          <span style={{ textAlign: 'center', lineHeight: 1.1 }}>{awayTeamName}</span>
         </button>
       </div>
 
+      {/* Exact Score Section */}
       {prediction?.winner && (
-        <div style={{ marginTop: 'var(--space-4)', padding: 'var(--space-4)', background: 'var(--color-surface-light)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', animation: 'fadeIn 0.3s ease' }}>
-          <p style={{ textAlign: 'center', marginBottom: 'var(--space-3)', fontSize: 'var(--fs-sm)', fontWeight: 600 }}>{t('pred_exact_score') || 'Exact Score Prediction'}</p>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-4)' }} dir="ltr">
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <input 
-                type="text"
-                inputMode="numeric"
-                maxLength={2}
-                className="form-input"
-                style={{ width: 64, height: 64, textAlign: 'center', fontSize: '2rem', padding: 0, fontWeight: 'bold' }}
-                value={prediction.homeScore || ''}
-                onChange={(e) => handleScoreChange('home', e.target.value)}
-                placeholder="-"
-                disabled={isLocked}
-              />
-              <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>{homeTeamName}</span>
+        <div style={{ animation: 'fadeIn 0.3s ease' }}>
+          <div style={{ textAlign: 'center', color: 'var(--color-gold)', fontWeight: 700, fontSize: '0.9rem', marginBottom: '16px' }}>
+            Exact score (+10)
+          </div>
+          
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+            {/* Home Stepper */}
+            <div style={{ display: 'flex', alignItems: 'center', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '30px', padding: '4px' }}>
+              <button onClick={() => updateScore('home', -1)} disabled={isLocked} style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'transparent', fontSize: '1.2rem', fontWeight: 600, color: '#4B5563', cursor: isLocked ? 'not-allowed' : 'pointer' }}>-</button>
+              <div style={{ width: 36, textAlign: 'center', fontSize: '1.4rem', fontWeight: 800, color: '#111827' }}>{prediction.homeScore || '0'}</div>
+              <button onClick={() => updateScore('home', 1)} disabled={isLocked} style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'transparent', fontSize: '1.2rem', fontWeight: 600, color: '#4B5563', cursor: isLocked ? 'not-allowed' : 'pointer' }}>+</button>
             </div>
             
-            <span style={{ fontWeight: 'bold', fontSize: 'var(--fs-xl)', color: 'var(--color-text-muted)' }}>:</span>
+            <div style={{ fontWeight: 800, color: '#9CA3AF', fontSize: '1.2rem' }}>-</div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <input 
-                type="text"
-                inputMode="numeric"
-                maxLength={2}
-                className="form-input"
-                style={{ width: 64, height: 64, textAlign: 'center', fontSize: '2rem', padding: 0, fontWeight: 'bold' }}
-                value={prediction.awayScore || ''}
-                onChange={(e) => handleScoreChange('away', e.target.value)}
-                placeholder="-"
-                disabled={isLocked}
-              />
-              <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>{awayTeamName}</span>
+            {/* Away Stepper */}
+            <div style={{ display: 'flex', alignItems: 'center', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '30px', padding: '4px' }}>
+              <button onClick={() => updateScore('away', -1)} disabled={isLocked} style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'transparent', fontSize: '1.2rem', fontWeight: 600, color: '#4B5563', cursor: isLocked ? 'not-allowed' : 'pointer' }}>-</button>
+              <div style={{ width: 36, textAlign: 'center', fontSize: '1.4rem', fontWeight: 800, color: '#111827' }}>{prediction.awayScore || '0'}</div>
+              <button onClick={() => updateScore('away', 1)} disabled={isLocked} style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'transparent', fontSize: '1.2rem', fontWeight: 600, color: '#4B5563', cursor: isLocked ? 'not-allowed' : 'pointer' }}>+</button>
             </div>
           </div>
           
+          {/* Save Pick Button (Visual Confirmation) */}
+          {!isLocked && (
+            <button 
+              onClick={() => alert("Pick selected! Don't forget to submit all predictions at the bottom of the page.")}
+              style={{
+                width: '100%',
+                padding: '14px',
+                borderRadius: '24px',
+                background: 'var(--color-gold)',
+                color: '#111827',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '1.05rem',
+                cursor: 'pointer',
+                transition: 'opacity 0.2s',
+                boxShadow: '0 4px 12px rgba(212, 168, 67, 0.3)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
+              Save pick
+            </button>
+          )}
+
           {savedPrediction && savedPrediction.pointsEarned !== null && savedPrediction.pointsEarned !== undefined && (
             <div style={{ textAlign: 'center', marginTop: 12, color: 'var(--color-gold)', fontWeight: 'bold' }}>
               Points Earned: {savedPrediction.pointsEarned}

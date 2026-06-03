@@ -47,24 +47,21 @@ export default function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="hero">
-        <div className="hero-content">
-          <div className="hero-badge" style={{ display: 'inline-flex', gap: '8px', background: 'var(--color-primary-red)', padding: '6px 16px', borderRadius: 20, fontWeight: 'bold' }}>
-            <span>{translations.hero_prize}</span>
-          </div>
-          <h1>{t('hero_title')}</h1>
-          <p>
-            {t('hero_desc_1')}
-            <br /><br />
-            <span style={{ color: 'var(--color-gold)', fontSize: '1.2em', fontWeight: 'bold' }}>{t('hero_desc_2')}</span>
-          </p>
-          <div className="hero-cta">
-            <Link href="/login" className="btn btn-primary btn-xl">
-              {t('hero_cta_primary')} <ArrowIcon locale={locale} />
-            </Link>
-            <Link href="/leaderboard" className="btn btn-secondary btn-xl">
-              {t('hero_cta_secondary')}
-            </Link>
+      <section className="hero-new" style={{ justifyContent: 'flex-end' }}>
+        {/* The user will upload their background image to /images/fans-bg.jpg */}
+        <div className="hero-new-bg" style={{ backgroundImage: "url('/images/fans-bg.jpg')" }}></div>
+
+        <div className="hero-new-right">
+          <div className="hero-right-content">
+            <h2 className="hero-subtitle">PREDICT MATCH RESULTS</h2>
+            <h1 className="hero-title">WIN 1000$</h1>
+            <p className="hero-desc">
+              Compete with football fans throughout the tournament. Predict match results, collect points, climb the live leaderboard and win the Grand Prize!
+            </p>
+            <div className="hero-actions">
+              <Link href="/login" className="btn-predict">PREDICT</Link>
+              <Link href="/leaderboard" className="link-leaderboard">LEADERBOARD</Link>
+            </div>
           </div>
         </div>
       </section>

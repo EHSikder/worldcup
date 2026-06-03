@@ -82,34 +82,40 @@ async function runSync() {
       errors.push(`LiveScores Error: ${e.message}`);
     }
 
-    // 2. Fetch all fixtures to keep dates/teams in sync (can be done less frequently, but 5 mins is okay for WorldCup)
-    try {
-      const fixtures = await fetchAllFixtures();
-      console.log(`📅 Fetched ${fixtures.length} fixtures from WorldCupAPI`);
-
-      for (const fixture of fixtures) {
-        try {
-          const parsed = parseFixture(fixture);
-          if (!parsed.fixtureId) continue;
-
-          const { data: dbMatch } = await supabase
-            .from('matches')
-            .select('id, match_number, round, status, winner_team_id, feeds_into_match, feeds_into_slot, kickoff_time')
-            .eq('worldcupapi_fixture_id', parsed.fixtureId)
-            .single();
-
-          if (!dbMatch) continue;
-          
-          // Only update if it's not live/finished since liveScores handles those better
-          if (dbMatch.status === 'scheduled') {
-            await processMatchUpdate(dbMatch, parsed, teamApiMap, errors, () => matchesUpdated++, () => predictionsLocked++, (p) => pointsRecalculated += p);
+    // 2. Fetch all fixtures to keep dates/teams in sync 
+    // To strictly limit to 1 request per 5 minutes, we only run the full fixtures sync (which requires multiple paginated requests) once per day, or skip it.
+    // The user requested 1 request every 5 minutes total. We will prioritize liveScores.
+    const currentMinute = new Date().getMinutes();
+    // Only run fixtures sync on the top of the hour to save requests
+    if (currentMinute < 5) {
+      try {
+        const fixtures = await fetchAllFixtures();
+        console.log(`📅 Fetched ${fixtures.length} fixtures from WorldCupAPI`);
+  
+        for (const fixture of fixtures) {
+          try {
+            const parsed = parseFixture(fixture);
+            if (!parsed.fixtureId) continue;
+  
+            const { data: dbMatch } = await supabase
+              .from('matches')
+              .select('id, match_number, round, status, winner_team_id, feeds_into_match, feeds_into_slot, kickoff_time')
+              .eq('worldcupapi_fixture_id', parsed.fixtureId)
+              .single();
+  
+            if (!dbMatch) continue;
+            
+            // Only update if it's not live/finished since liveScores handles those better
+            if (dbMatch.status === 'scheduled') {
+              await processMatchUpdate(dbMatch, parsed, teamApiMap, errors, () => matchesUpdated++, () => predictionsLocked++, (p) => pointsRecalculated += p);
+            }
+          } catch (fixtureErr) {
+            errors.push(`Fixture ${fixture.id}: ${fixtureErr.message}`);
           }
-        } catch (fixtureErr) {
-          errors.push(`Fixture ${fixture.id}: ${fixtureErr.message}`);
         }
+      } catch (e) {
+        errors.push(`Fixtures Error: ${e.message}`);
       }
-    } catch (e) {
-      errors.push(`Fixtures Error: ${e.message}`);
     }
 
     // 3. Lock predictions for matches starting in < 5 minutes
