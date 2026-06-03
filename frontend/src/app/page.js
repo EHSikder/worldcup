@@ -105,10 +105,18 @@ export default function HomePage() {
           </div>
           <div className="scoring-grid">
             {SCORING_TABLE.map((item) => (
-              <div className="scoring-card" key={item.round}>
-                <div className="scoring-round">{item.round}</div>
-                <div className="scoring-points">{item.points} {t('scoring_pts')}</div>
-                <div className="scoring-label">per correct prediction</div>
+              <div className="scoring-card" key={item.round} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', minHeight: '180px' }}>
+                <div className="scoring-round" style={{ marginBottom: '16px' }}>{item.round}</div>
+                
+                <div className="scoring-points" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{item.points} {t('scoring_pts')}</div>
+                <div className="scoring-label" style={{ marginBottom: '16px', color: 'var(--color-text-muted)' }}>per correct winner</div>
+                
+                {item.exact && (
+                  <>
+                    <div className="scoring-points" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-green)' }}>+{item.exact} {t('scoring_pts')}</div>
+                    <div className="scoring-label" style={{ color: 'var(--color-text-muted)' }}>for exact score</div>
+                  </>
+                )}
               </div>
             ))}
           </div>

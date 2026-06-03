@@ -101,12 +101,13 @@ export const R32_MATCH_INFO = {
 };
 
 export const SCORING_TABLE = [
-  { round: 'Group Stage', points: 1 },
-  { round: 'Round of 32', points: 3 },
-  { round: 'Round of 16', points: 5 },
-  { round: 'Quarter-Finals', points: 7 },
-  { round: 'Semi-Finals', points: 9 },
-  { round: 'Final / Tournament Winner', points: 11 },
+  { round: 'Group Stage', points: 1, exact: 10 },
+  { round: 'Round of 32', points: 3, exact: 10 },
+  { round: 'Round of 16', points: 5, exact: 10 },
+  { round: 'Quarter-Finals', points: 7, exact: 10 },
+  { round: 'Semi-Finals', points: 9, exact: 10 },
+  { round: 'Third Place', points: 10, exact: 10 },
+  { round: 'Final / Tournament Winner', points: 11, exact: 10 },
 ];
 
 export const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
