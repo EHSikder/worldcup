@@ -87,7 +87,7 @@ function parseFixture(fixture) {
     fixtureId: fixture.id || fixture.fixture_id,
     homeTeamApiId: fixture.home?.id,
     awayTeamApiId: fixture.away?.id,
-    kickoffTime: `${fixture.date}T${fixture.time}+03:00`,
+    kickoffTime: `${fixture.date}T${fixture.time}Z`,
     status: 'scheduled',
     homeScore: null,
     awayScore: null,

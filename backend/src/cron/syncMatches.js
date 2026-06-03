@@ -67,7 +67,7 @@ async function runSync() {
           // Find the match in our DB by worldcupapi_fixture_id
           const { data: dbMatch } = await supabase
             .from('matches')
-            .select('id, match_number, round, status, winner_team_id, feeds_into_match, feeds_into_slot')
+            .select('id, match_number, round, status, winner_team_id, feeds_into_match, feeds_into_slot, home_team_id, away_team_id')
             .eq('worldcupapi_fixture_id', parsed.fixtureId)
             .single();
 
@@ -99,7 +99,7 @@ async function runSync() {
   
             const { data: dbMatch } = await supabase
               .from('matches')
-              .select('id, match_number, round, status, winner_team_id, feeds_into_match, feeds_into_slot, kickoff_time')
+              .select('id, match_number, round, status, winner_team_id, feeds_into_match, feeds_into_slot, kickoff_time, home_team_id, away_team_id')
               .eq('worldcupapi_fixture_id', parsed.fixtureId)
               .single();
   
@@ -203,8 +203,10 @@ async function processMatchUpdate(dbMatch, parsed, teamApiMap, errors, incMatche
   if (parsed.homePenaltyScore !== null) updateData.home_penalty_score = parsed.homePenaltyScore;
   if (parsed.awayPenaltyScore !== null) updateData.away_penalty_score = parsed.awayPenaltyScore;
 
-  if (homeTeamId) updateData.home_team_id = homeTeamId;
-  if (awayTeamId) updateData.away_team_id = awayTeamId;
+  // Only update team IDs if the DB match doesn't already have them
+  // (e.g., knockout matches where teams are decided later)
+  if (homeTeamId && !dbMatch.home_team_id) updateData.home_team_id = homeTeamId;
+  if (awayTeamId && !dbMatch.away_team_id) updateData.away_team_id = awayTeamId;
   if (winnerTeamId) updateData.winner_team_id = winnerTeamId;
 
   if (Object.keys(updateData).length > 0) {
