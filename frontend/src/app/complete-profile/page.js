@@ -83,7 +83,8 @@ export default function CompleteProfilePage() {
     }
   };
 
-  if (loading && !user && !sessionStorage.getItem('temp_user_info')) {
+  const tempUserInfoExists = typeof window !== 'undefined' ? !!sessionStorage.getItem('temp_user_info') : false;
+  if (loading && !user && !tempUserInfoExists) {
     return <div className="loading-page"><div className="spinner spinner-lg"></div></div>;
   }
 
