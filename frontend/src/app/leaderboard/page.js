@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import Footer from '@/components/layout/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 
@@ -328,8 +327,6 @@ export default function LeaderboardPage() {
           </div>
         </div>
       )}
-
-      <Footer />
     </>
   );
 }

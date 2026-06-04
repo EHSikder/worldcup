@@ -17,20 +17,20 @@ export const en = {
 
   // Homepage - Steps
   steps_title: "How It Works",
-  steps_subtitle: "Three simple steps to join the prediction challenge",
-  step_1_title: "Sign In Securely",
-  step_1_desc: "Sign in instantly using your Google account. Set up your profile and pick your favorite team to get started.",
+  steps_subtitle: "Three simple steps to join R-Build World Cup Challenge",
+  step_1_title: "Sign Up Securely",
+  step_1_desc: "Sign up instantly and Set up your profile with your favorite team to get started.",
   step_2_title: "Predict Every Match",
-  step_2_desc: "Predict the winner and the exact score for all 104 matches of the tournament. Update your predictions up to 5 minutes before kickoff.",
-  step_3_title: "Win the Grand Prize",
-  step_3_desc: "Earn points for accurate predictions and climb the leaderboard. The 1st place overall winner will take home $1000!",
+  step_2_desc: "Predict match results and exact scores before kickoff..",
+  step_3_title: "Win $1000",
+  step_3_desc: "Top the leaderboard at the end of the tournament and you walk away with the grand prize of $1000!",
 
   // Homepage - Scoring
   scoring_title: "Scoring System",
-  scoring_subtitle: "Earn points by predicting the correct match outcome, plus a massive +10 points bonus for guessing the exact score!",
+  scoring_subtitle: "Earn points by predicting the correct result. MASSIVE +10 points for guessing the final score.",
   scoring_winner: "Correct Winner",
   scoring_exact: "Exact Score",
-  scoring_pts: "pts",
+  scoring_pts: "points/match",
   scoring_exact_bonus_title: "⚡ Exact Score Bonus",
   scoring_exact_bonus_desc: "Earn bonus points in any round if you predict the exact score perfectly!",
 
@@ -65,7 +65,7 @@ export const en = {
   footer_terms: "Terms of Service",
   footer_privacy: "Privacy Policy",
   footer_copy: "All rights reserved.",
-  footer_powered: "Powered by R BUILD and Partners",
+  footer_powered: "Powered by R BUILD and RIWA",
   footer_text: "© 2026 R BUILD Prediction Challenge. All rights reserved.",
 
   // Leaderboard
@@ -78,8 +78,8 @@ export const en = {
   lb_col_rank: "Rank",
   lb_col_user: "User name",
   lb_col_team: "Team",
-  lb_grand_prize_label: "Grand Prize Pool",
-  lb_grand_prize_tagline: "Top predictor wins it all",
+  lb_grand_prize_label: "Grand Prize",
+  lb_grand_prize_tagline: "Predict & Win",
   lb_grand_champion_title: "Grand Prize:",
   lb_grand_champion_subtitle: "Top predictor wins it all",
 
@@ -112,4 +112,5 @@ export const en = {
   profile_team_ph: "Search for a team...",
   profile_submit: "Complete Setup",
   profile_saving: "Saving...",
+
 };

@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Footer from '@/components/layout/Footer';
 import { SCORING_TABLE, GROUPS } from '@/lib/constants';
 import api from '@/lib/api';
 import { useLanguage } from '@/context/LanguageContext';
@@ -47,20 +46,36 @@ export default function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="hero-new" style={{ justifyContent: 'flex-end' }}>
-        {/* The user will upload their background image to /images/fans-bg.jpg */}
+      <section className="hero-new" style={{ direction: 'ltr' }}>
+        {/* Background image — flips in RTL via CSS class */}
         <div className="hero-new-bg" style={{ backgroundImage: "url('/images/fans-bg.jpg')" }}></div>
 
-        <div className="hero-new-right">
+        {/* Left Side — Desktop only */}
+        <div className="hero-new-left">
+          <div className="hero-left-content" style={{ direction: locale === 'ar' ? 'rtl' : 'ltr' }}>
+            <div className="hero-left-text">
+              {locale === 'ar' ? (
+                <>{t('hero_left_line1')}<br/>{t('hero_left_line2')}<br/>{t('hero_left_line3')}</>
+              ) : (
+                <>PREDICT.<br/>COMPETE.<br/>WIN.</>
+              )}
+            </div>
+            <div className="hero-logo-container">           
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side — Always visible */}
+        <div className="hero-new-right" style={{ direction: locale === 'ar' ? 'rtl' : 'ltr' }}>
           <div className="hero-right-content">
-            <h2 className="hero-subtitle">PREDICT MATCH RESULTS</h2>
-            <h1 className="hero-title">WIN 1000$</h1>
+            <h2 className="hero-subtitle">{locale === 'ar' ? t('hero_right_subtitle') : 'R-BUILD WORLD CUP CHALLENGE'}</h2>
+            <h1 className="hero-title">{locale === 'ar' ? t('hero_right_title') : 'WIN $1000'}</h1>
             <p className="hero-desc">
-              Compete with football fans throughout the tournament. Predict match results, collect points, climb the live leaderboard and win the Grand Prize!
+              {locale === 'ar' ? t('hero_desc_1') : 'Predict match results and scores, earn points, climb the leaderboard, and become the R-Build Champion.'}
             </p>
             <div className="hero-actions">
-              <Link href="/login" className="btn-predict">PREDICT</Link>
-              <Link href="/leaderboard" className="link-leaderboard">LEADERBOARD</Link>
+              <Link href="/login" className="btn-predict">{locale === 'ar' ? t('hero_cta_primary') : 'PREDICT'}</Link>
+              <Link href="/leaderboard" className="link-leaderboard">{locale === 'ar' ? t('hero_cta_secondary') : 'LEADERBOARD'}</Link>
             </div>
           </div>
         </div>
@@ -86,8 +101,8 @@ export default function HomePage() {
             </div>
             <div className="card step-card" style={{ border: '2px solid var(--color-gold)' }}>
               <div className="step-number">3</div>
-              <h3 style={{ color: 'var(--color-gold)' }}>Win $1000!</h3>
-              <p>Top the leaderboard at the end of the tournament and you walk away with the grand prize of $1000 USD!</p>
+              <h3>{t('step_3_title')}</h3>
+              <p>{t('step_3_desc')}</p>
             </div>
           </div>
         </div>
@@ -172,11 +187,7 @@ export default function HomePage() {
 
       {/* CTA -> Prizes Section */}
       <section className="section" style={{ textAlign: 'center', background: 'linear-gradient(to top, rgba(212,168,67,0.1), transparent)' }}>
-        <div className="container">
-          <TrophyHeroIcon />
-          <h2 style={{ marginBottom: 'var(--space-4)', color: 'var(--color-gold)', marginTop: 'var(--space-4)' }}>
-            {translations.prize_title}
-          </h2>
+        <div className="container">        
           <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-8)', fontSize: 'var(--fs-lg)', maxWidth: 600, margin: '0 auto var(--space-8)' }}>
             {translations.prize_desc}
           </p>
@@ -185,8 +196,6 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
-
-      <Footer />
     </>
   );
 }

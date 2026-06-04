@@ -607,9 +607,11 @@ h4 { font-size: var(--fs-xl); }
   background-position: center;
   background-repeat: no-repeat;
   z-index: 0;
-  /* Never flip the background image in RTL */
-  direction: ltr;
-  transform-origin: center;
+}
+
+/* Flip background image horizontally when in RTL mode */
+.hero-bg-rtl {
+  transform: scaleX(-1);
 }
 
 .hero-new-overlay {
@@ -644,16 +646,19 @@ h4 { font-size: var(--fs-xl); }
   display: flex;
   flex-direction: column;
   padding-left: var(--space-8);
-  margin-top: -40px; /* Offset to center better vertically */
+  padding-right: var(--space-8);
+  margin-top: -120px; /* Adjusted to move text higher */
+  align-items: flex-start; /* Align text and logo to the left */
 }
 
 .hero-left-text {
-  font-size: clamp(3rem, 5vw, 4.5rem);
+  font-size: clamp(2rem, 3.5vw, 3rem); /* Made text smaller */
   font-weight: 900;
-  line-height: 0.95;
+  line-height: 1.1;
   color: #FFFFFF;
   margin-bottom: var(--space-6);
-  letter-spacing: -0.02em;
+  letter-spacing: 0.05em; /* Added slight letter spacing */
+  text-align: start;
 }
 
 .hero-logo-container {
@@ -756,28 +761,24 @@ h4 { font-size: var(--fs-xl); }
   color: #C4FF00;
 }
 
-@media (max-width: 768px) {
+/* Hide left panel on mobile and tablet */
+@media (max-width: 1024px) {
+  .hero-new-left {
+    display: none !important;
+  }
   .hero-new {
     flex-direction: column;
     height: auto;
-    min-height: 600px;
-  }
-  .hero-new-left {
-    width: 100%;
-    height: 300px;
-  }
-  .hero-left-svg {
-    transform: scaleX(1.5);
-    transform-origin: left;
+    min-height: 400px;
   }
   .hero-new-right {
     width: 100%;
-    padding: var(--space-4);
+    padding: var(--space-6) var(--space-4);
     height: auto;
+    min-height: 400px;
   }
-  .hero-left-content {
-    margin-top: 0;
-    padding-left: var(--space-4);
+  .hero-title {
+    font-size: clamp(3rem, 10vw, 5rem);
   }
 }
 
@@ -1632,7 +1633,7 @@ h4 { font-size: var(--fs-xl); }
 .mobile-nav-overlay {
   position: fixed;
   inset: 0;
-  background: var(--color-overlay);
+  background: rgba(0, 0, 0, 0.5); /* Replaced undefined var(--color-overlay) */
   z-index: var(--z-modal-backdrop);
   animation: fadeIn 0.2s ease;
 }
@@ -1643,7 +1644,7 @@ h4 { font-size: var(--fs-xl); }
   right: 0;
   width: 280px;
   height: 100vh;
-  background: var(--color-surface-dark);
+  background: var(--color-surface-white); /* Replaced undefined var(--color-surface-dark) */
   border-left: 1px solid var(--color-border);
   z-index: var(--z-modal);
   padding: var(--space-6);
@@ -1664,8 +1665,8 @@ h4 { font-size: var(--fs-xl); }
 }
 
 .mobile-nav a:hover {
-  background: rgba(255,255,255,0.05);
-  color: var(--color-white);
+  background: var(--color-surface-light);
+  color: var(--color-primary-dark);
 }
 
 /* ── Legal Pages ──────────────────────────────────────────── */

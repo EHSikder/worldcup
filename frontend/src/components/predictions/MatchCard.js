@@ -219,7 +219,7 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
       {prediction?.winner && (
         <div style={{ animation: 'fadeIn 0.3s ease' }}>
           <div style={{ textAlign: 'center', color: 'var(--color-gold)', fontWeight: 700, fontSize: '0.9rem', marginBottom: '16px' }}>
-            Exact score (+10)
+            Final Score (+10)
           </div>
           
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>

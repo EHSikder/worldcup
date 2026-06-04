@@ -10,27 +10,33 @@ export const ar = {
   // Homepage - Hero
   hero_badge: "تحدي توقعات R BUILD",
   hero_title: "توقع بطل البطولة",
-  hero_desc_1: "توقع نتائج المباريات من دور المجموعات حتى النهائي. توقع الفائزين، خمن النتائج الدقيقة، وتنافس مع زملائك وأصدقائك.",
+  hero_desc_1: "سجّل توقعاتك، اجمع النقاط، نافس زملاءك، وتصدّر لوحة الترتيب لتصبح بطل R-Build.",
   hero_desc_2: "الجائزة الكبرى: 1000 دولار للفائز بالمركز الأول!",
-  hero_cta_primary: "توقع واربح",
-  hero_cta_secondary: "عرض المتصدرين",
+  hero_cta_primary: "سجّل توقعاتك",
+  hero_cta_secondary: "لوحة الترتيب",
+  hero_left_line1: "توقّع.",
+  hero_left_line2: "تنافس.",
+  hero_left_line3: "اربح.",
+  hero_right_subtitle: "تحدي R-Build لكأس العالم",
+  hero_right_title: "1000 دولار",
+
 
   // Homepage - Steps
-  steps_title: "كيف تعمل",
-  steps_subtitle: "ثلاث خطوات بسيطة للانضمام إلى تحدي التوقعات",
-  step_1_title: "سجل الدخول بأمان",
-  step_1_desc: "قم بتسجيل الدخول فوراً باستخدام حساب Google الخاص بك. قم بإعداد ملفك الشخصي واختر فريقك المفضل للبدء.",
-  step_2_title: "توقع كل مباراة",
-  step_2_desc: "توقع الفائز والنتيجة الدقيقة لجميع مباريات البطولة الـ 104. قم بتحديث توقعاتك حتى 5 دقائق قبل بدء المباراة.",
-  step_3_title: "اربح الجائزة الكبرى",
-  step_3_desc: "اكسب نقاطًا مقابل التوقعات الدقيقة وتصدر لوحة المتصدرين. الفائز الأول سيحصل على 1000 دولار!",
+  steps_title: "كيف تعمل المسابقة؟",
+  steps_subtitle: "انضم إلى التحدي في 3 خطوات بسيطة",
+  step_1_title: "تسجيل الدخول",
+  step_1_desc: "سجّل الدخول وأكمل بياناتك للبدء في المنافسة.",
+  step_2_title: "سجّل توقعاتك",
+  step_2_desc: "توقع نتائج المباريات والنتائج النهائية. يمكنك تعديل توقعاتك حتى 5 دقائق قبل بداية المباراة..",
+  step_3_title: "اربح 1000 دولار",
+  step_3_desc: ".R-Build اجمع النقاط طوال البطولة، تصدّر لوحة الترتيب، وكن بطل",
 
   // Homepage - Scoring
-  scoring_title: "نظام تسجيل النقاط",
-  scoring_subtitle: "اكسب النقاط بتوقع النتيجة الصحيحة للمباراة، بالإضافة إلى مكافأة ضخمة +10 نقاط لتخمين النتيجة الدقيقة!",
+  scoring_title: "نظام النقاط",
+  scoring_subtitle: "اكسب نقاطًا مع كل توقع صحيح، واحصل على 10 نقاط إضافية عند توقع النتيجة النهائية للمباراة",
   scoring_winner: "الفائز الصحيح",
   scoring_exact: "النتيجة الدقيقة",
-  scoring_pts: "نقطة",
+  scoring_pts: "نقطة / مباراة",
   scoring_exact_bonus_title: "⚡ مكافأة النتيجة الدقيقة",
   scoring_exact_bonus_desc: "اكسب نقاطاً إضافية في أي جولة إذا توقعت النتيجة الدقيقة تماماً!",
 
@@ -41,11 +47,11 @@ export const ar = {
   scoring_round_qf: "ربع النهائي",
   scoring_round_sf: "نصف النهائي",
   scoring_round_3rd: "المركز الثالث",
-  scoring_round_final: "النهائي / بطل البطولة",
+  scoring_round_final: "بطل البطولة",
 
   // Homepage - Teams
-  teams_title: "48 فريقاً",
-  teams_subtitle: "12 مجموعة من 4 فرق تتنافس في أكبر كأس عالم على الإطلاق",
+  teams_title: "المنتخبات الـ48",
+  teams_subtitle: "🏆.مجموعة، 48 منتخبًا، وبطل واحد فقط", 
   group: "مجموعة",
 
   // Homepage - Bottom CTA
@@ -78,8 +84,8 @@ export const ar = {
   lb_col_rank: "المركز",
   lb_col_user: "اسم المستخدم",
   lb_col_team: "الفريق",
-  lb_grand_prize_label: "مجموع الجوائز الكبرى",
-  lb_grand_prize_tagline: "المتوقع الأول يفوز بالكل",
+  lb_grand_prize_label: "الجائزة الكبرى",
+  lb_grand_prize_tagline: "توقع واربح",
   lb_grand_champion_title: "الجائزة الكبرى:",
   lb_grand_champion_subtitle: "المتوقع الأول يفوز بالكل",
 
@@ -92,6 +98,11 @@ export const ar = {
   pred_match: "مباراة",
   pred_exact_score: "توقع النتيجة الدقيقة (مكافأة +10 نقاط)",
   pred_draw: "تعادل",
+  pred_prize_label: "بركة الجائزة الكبرى",
+  pred_prize_tagline: "توقع واربح",
+  pred_rank_label: "رتبة",
+  pred_leader_label: "قائد",
+  pred_you: "(أنت)",  
 
   // Login
   login_title: "مرحباً بعودتك",

@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import Footer from '@/components/layout/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { auth, googleProvider } from '@/lib/firebase';
 import { signInWithPopup } from 'firebase/auth';
@@ -86,7 +85,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-      <Footer />
     </>
   );
 }

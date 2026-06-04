@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { ROUND_NAMES } from '@/lib/constants';
@@ -43,7 +44,7 @@ export default function ProfilePage() {
           {profile.total_points || 0}
         </div>
         <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--fs-sm)', marginTop: 'var(--space-2)' }}>
-          {stats?.correct_predictions || 0} correct out of {stats?.total_predictions || 0} predictions
+          {stats?.correct_predictions || 0} Correct Out of {stats?.total_predictions || 0} predictions
         </div>
       </div>
 
@@ -99,7 +100,7 @@ export default function ProfilePage() {
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-        <Link href="/bracket" className="btn btn-primary">Edit Bracket</Link>
+        <Link href="/bracket" className="btn btn-primary">Edit Predictions</Link>
         <Link href="/leaderboard" className="btn btn-secondary">Leaderboard</Link>
         <button className="btn btn-ghost" onClick={() => { logout(); router.push('/'); }} style={{ color: 'var(--color-error)' }}>Logout</button>
       </div>

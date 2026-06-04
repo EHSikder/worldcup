@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
-import Footer from '@/components/layout/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function CompleteProfilePage() {
@@ -229,7 +228,6 @@ export default function CompleteProfilePage() {
           </form>
         </div>
       </div>
-      <Footer />
     </>
   );
 }
