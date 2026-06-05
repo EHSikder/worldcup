@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { auth, googleProvider } from '@/lib/firebase';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
 import api from '@/lib/api';
 import Link from 'next/link';
 
@@ -12,9 +12,12 @@ export default function LoginPage() {
   const router = useRouter();
   const { user, login, isAuthenticated, loading } = useAuth();
   const [error, setError] = useState(null);
+  const [banner, setBanner] = useState(null); // { type: 'error'|'info', message, linkText, linkHref }
   const { t } = useLanguage();
   
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [emailLogin, setEmailLogin] = useState({ email: '', password: '' });
+  const [isEmailLoggingIn, setIsEmailLoggingIn] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && !loading) {
@@ -26,9 +29,18 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, loading, user, router]);
 
+  // Auto-dismiss banner after 6 seconds
+  useEffect(() => {
+    if (banner) {
+      const timer = setTimeout(() => setBanner(null), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [banner]);
+
   const handleGoogleLogin = async () => {
     try {
       setError(null);
+      setBanner(null);
       setIsLoggingIn(true);
       const result = await signInWithPopup(auth, googleProvider);
       const token = await result.user.getIdToken();
@@ -40,11 +52,65 @@ export default function LoginPage() {
         router.push('/predictions');
       }
     } catch (err) {
-      setError(err.data?.message || err.message || 'Failed to login with Google.');
-      // If there's an error, sign out from firebase client side so they can try again or sign up
+      const msg = err.data?.message || err.message || 'Failed to login with Google.';
+      if (err.status === 404 || msg.includes('not found') || msg.includes('sign up')) {
+        setBanner({ type: 'info', message: 'No account found with this email.', linkText: 'Sign up instead', linkHref: '/signup' });
+      } else {
+        setError(msg);
+      }
       auth.signOut().catch(()=> {});
     } finally {
       setIsLoggingIn(false);
+    }
+  };
+
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    if (!emailLogin.email || !emailLogin.password) {
+      setError('Please enter your email and password.');
+      return;
+    }
+    try {
+      setError(null);
+      setBanner(null);
+      setIsEmailLoggingIn(true);
+
+      const result = await signInWithEmailAndPassword(auth, emailLogin.email, emailLogin.password);
+      
+      // Check if email is verified
+      if (!result.user.emailVerified) {
+        setError('Please verify your email before logging in. Check your inbox for the verification link.');
+        auth.signOut().catch(() => {});
+        return;
+      }
+
+      const token = await result.user.getIdToken();
+      const res = await api.post('/api/auth/firebase-login', { token });
+      
+      if (res.success) {
+        login(res.data.token, res.data.user);
+        router.push('/predictions');
+      }
+    } catch (err) {
+      const code = err.code || '';
+      const msg = err.data?.message || err.message || '';
+      
+      if (code === 'auth/user-not-found' || code === 'auth/invalid-credential') {
+        setBanner({ type: 'info', message: 'No account found with this email or wrong password.', linkText: 'Try signing up', linkHref: '/signup' });
+      } else if (code === 'auth/wrong-password') {
+        setError('Incorrect password. Please try again.');
+      } else if (code === 'auth/too-many-requests') {
+        setError('Too many failed attempts. Please try again later.');
+      } else if (err.status === 404 || msg.includes('not found')) {
+        setBanner({ type: 'info', message: 'No account found. Please sign up first.', linkText: 'Sign up', linkHref: '/signup' });
+      } else if (msg.includes('EMAIL_NOT_VERIFIED') || err.data?.code === 'EMAIL_NOT_VERIFIED') {
+        setError('Please verify your email before logging in. Check your inbox.');
+      } else {
+        setError(msg || 'Login failed. Please try again.');
+      }
+      auth.signOut().catch(() => {});
+    } finally {
+      setIsEmailLoggingIn(false);
     }
   };
 
@@ -54,6 +120,19 @@ export default function LoginPage() {
 
   return (
     <>
+      {/* Top Banner */}
+      {banner && (
+        <div className={`auth-banner auth-banner-${banner.type}`} style={{ animation: 'slideDown 0.3s ease' }}>
+          <span>{banner.message}</span>
+          {banner.linkHref && (
+            <Link href={banner.linkHref} style={{ color: 'inherit', fontWeight: 700, textDecoration: 'underline', marginLeft: 8 }}>
+              {banner.linkText}
+            </Link>
+          )}
+          <button onClick={() => setBanner(null)} style={{ background: 'none', border: 'none', color: 'inherit', marginLeft: 'auto', cursor: 'pointer', fontSize: '1.2rem', padding: '0 4px' }}>&times;</button>
+        </div>
+      )}
+
       <div className="auth-page">
         <div className="auth-card" style={{ maxWidth: 450, margin: '40px auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
@@ -61,8 +140,9 @@ export default function LoginPage() {
             <p style={{ color: 'var(--color-text-muted)' }}>{t('login_subtitle') || 'Log in to continue your predictions'}</p>
           </div>
 
-          {error && <div className="alert alert-error">{error}</div>}
+          {error && <div className="alert alert-error" style={{ marginBottom: 'var(--space-4)' }}>{error}</div>}
 
+          {/* Google Login */}
           <button 
             type="button" 
             className="btn btn-secondary" 
@@ -78,6 +158,45 @@ export default function LoginPage() {
             </svg>
             {isLoggingIn ? 'Logging in...' : (t('login_google') || 'Log in with Google')}
           </button>
+
+          {/* Divider */}
+          <div className="auth-divider">
+            <span>or</span>
+          </div>
+
+          {/* Email Login Form */}
+          <form onSubmit={handleEmailLogin}>
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input 
+                className="form-input" 
+                type="email" 
+                value={emailLogin.email} 
+                onChange={e => setEmailLogin({ ...emailLogin, email: e.target.value })}
+                placeholder="Enter your email"
+                autoComplete="email"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <input 
+                className="form-input" 
+                type="password" 
+                value={emailLogin.password} 
+                onChange={e => setEmailLogin({ ...emailLogin, password: e.target.value })}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+              />
+            </div>
+            <button 
+              type="submit" 
+              className="btn btn-primary" 
+              disabled={isEmailLoggingIn}
+              style={{ width: '100%', padding: '12px' }}
+            >
+              {isEmailLoggingIn ? 'Logging in...' : 'Log in with Email'}
+            </button>
+          </form>
           
           <div style={{ textAlign: 'center', marginTop: 'var(--space-6)', fontSize: '0.95rem' }}>
             <span style={{ color: 'var(--color-text-muted)' }}>Don't have an account? </span>

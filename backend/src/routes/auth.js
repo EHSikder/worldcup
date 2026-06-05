@@ -18,6 +18,16 @@ router.post('/firebase-login', async (req, res, next) => {
     const decodedToken = await admin.auth().verifyIdToken(token);
     const { email } = decodedToken;
 
+    // For email/password users, require email verification
+    const signInProvider = decodedToken.firebase?.sign_in_provider;
+    if (signInProvider === 'password' && !decodedToken.email_verified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Please verify your email before logging in. Check your inbox for the verification link.',
+        code: 'EMAIL_NOT_VERIFIED'
+      });
+    }
+
     // Check if user exists
     const { data: user, error } = await supabase
       .from('users')
@@ -73,6 +83,16 @@ router.post('/firebase-signup', async (req, res, next) => {
     const decodedToken = await admin.auth().verifyIdToken(token);
     const { email, name, uid } = decodedToken;
 
+    // For email/password users, require email verification
+    const signInProvider = decodedToken.firebase?.sign_in_provider;
+    if (signInProvider === 'password' && !decodedToken.email_verified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Please verify your email first. Check your inbox for the verification link.',
+        code: 'EMAIL_NOT_VERIFIED'
+      });
+    }
+
     // Check if user exists
     const { data: user, error } = await supabase
       .from('users')
@@ -106,9 +126,18 @@ router.post('/firebase-signup', async (req, res, next) => {
  */
 router.post('/complete-profile', async (req, res, next) => {
   try {
-    const { token, mobile_number, civil_id, favorite_team_id } = req.body;
+    const { token, mobile_number, civil_id, favorite_team_id, full_name } = req.body;
     if (!token || !mobile_number || !civil_id || !favorite_team_id) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    // Validate civil_id format
+    if (!/^\d{12}$/.test(civil_id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Civil ID must be exactly 12 numeric digits.',
+        code: 'INVALID_CIVIL_ID'
+      });
     }
 
     // Verify token again to ensure identity
@@ -139,7 +168,7 @@ router.post('/complete-profile', async (req, res, next) => {
 
     // Create user
     const insertData = {
-      full_name: name || 'User',
+      full_name: full_name || name || 'User',
       email,
       firebase_uid: uid,
       mobile_number,

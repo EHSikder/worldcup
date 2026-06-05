@@ -13,7 +13,7 @@ function StatCard({ value, label, color }) {
 
 /* ═══════ ADMIN LOGIN ═══════ */
 function AdminLogin({ onLogin }) {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,7 +23,7 @@ function AdminLogin({ onLogin }) {
     setLoading(true);
     setError('');
     try {
-      const res = await api.post('/api/admin/login', { email, password });
+      const res = await api.post('/api/admin/login', { username, password });
       localStorage.setItem('wc2026_admin_token', res.data.token);
       onLogin(res.data.admin);
     } catch (err) {
@@ -50,8 +50,8 @@ function AdminLogin({ onLogin }) {
         )}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Admin Email</label>
-            <input className="form-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@wc-26.com" autoComplete="email" />
+            <label className="form-label">Admin Username</label>
+            <input className="form-input" type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="admin" autoComplete="username" />
           </div>
           <div className="form-group">
             <label className="form-label">Password</label>

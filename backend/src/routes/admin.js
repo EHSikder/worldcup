@@ -15,61 +15,53 @@ const {
 } = require('../utils/validators');
 
 // The only email allowed to access admin panel
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@wc-26.com';
+// const ADMIN_EMAIL removed — now using admin_users table
 
 /**
  * POST /api/admin/login
- * Admin login — uses the same users table but only allows the admin email
+ * Admin login — uses the admin_users table with username + password
  */
 router.post('/login', authLimiter, async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    if (!email || !password) {
+    if (!username || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required.',
+        message: 'Username and password are required.',
       });
     }
 
-    // Only the designated admin email can log in here
-    if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. You are not authorized to access the admin panel.',
-      });
-    }
-
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('id, full_name, email, password_hash')
-      .eq('email', email.toLowerCase())
+    const { data: admin, error } = await supabase
+      .from('admin_users')
+      .select('id, username, password_hash')
+      .eq('username', username)
       .single();
 
-    if (error || !user) {
+    if (error || !admin) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password.',
+        message: 'Invalid username or password.',
       });
     }
 
-    const isValid = await bcrypt.compare(password, user.password_hash);
+    const isValid = await bcrypt.compare(password, admin.password_hash);
     if (!isValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password.',
+        message: 'Invalid username or password.',
       });
     }
 
     const token = signAdminToken({
-      adminId: user.id,
-      email: user.email,
+      adminId: admin.id,
+      username: admin.username,
     });
 
     res.json({
       success: true,
       message: 'Admin login successful.',
-      data: { token, admin: { id: user.id, email: user.email, full_name: user.full_name } },
+      data: { token, admin: { id: admin.id, username: admin.username } },
     });
   } catch (err) {
     next(err);

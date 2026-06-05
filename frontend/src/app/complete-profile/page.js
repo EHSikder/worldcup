@@ -58,8 +58,25 @@ export default function CompleteProfilePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.fullName || !formData.mobile_number || !formData.civil_id || !formData.favoriteTeamId) {
-      setError('Please fill in all required fields, including selecting a favorite team.');
+    // Field-specific validation
+    if (!formData.fullName.trim()) {
+      setError('Full name is required.');
+      return;
+    }
+    if (!formData.mobile_number.trim()) {
+      setError('Mobile number is required.');
+      return;
+    }
+    if (!formData.civil_id.trim()) {
+      setError('Civil ID is required.');
+      return;
+    }
+    if (!/^\d{12}$/.test(formData.civil_id)) {
+      setError('Civil ID must be exactly 12 numeric digits (e.g., 281234567890).');
+      return;
+    }
+    if (!formData.favoriteTeamId) {
+      setError('Please select a favorite team by tapping on one below.');
       return;
     }
     setSubmitting(true);
@@ -103,7 +120,21 @@ export default function CompleteProfilePage() {
             <p style={{ color: 'var(--color-text-muted)' }}>{t('profile_subtitle')}</p>
           </div>
 
-          {error && <div className="alert alert-error">{error}</div>}
+          {error && (
+            <div className="alert alert-error" style={{ 
+              marginBottom: 'var(--space-4)', 
+              padding: 'var(--space-3) var(--space-4)',
+              background: 'rgba(228, 0, 43, 0.08)',
+              border: '1px solid rgba(228, 0, 43, 0.3)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--color-error)',
+              fontSize: 'var(--fs-sm)',
+              fontWeight: 500,
+              animation: 'slideDown 0.3s ease'
+            }}>
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>

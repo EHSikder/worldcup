@@ -1770,3 +1770,89 @@ h4 { font-size: var(--fs-xl); }
 body { font-family: var(--font-inter), sans-serif; }
 html[dir='rtl'] body { font-family: var(--font-cairo), sans-serif; }
 
+/* ── Auth Pages ──────────────────────────────────────────── */
+
+/* Top banner for auth messages (redirect hints, success, errors) */
+.auth-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  animation: slideDown 0.35s ease;
+}
+.auth-banner-error {
+  background: var(--color-primary-red);
+  color: #fff;
+}
+.auth-banner-info {
+  background: #1a5276;
+  color: #d6eaf8;
+}
+.auth-banner-success {
+  background: #1e7e34;
+  color: #d4edda;
+}
+
+/* "— or —" divider between Google and email forms */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-5) 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* Alert boxes (inline errors) */
+.alert {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  margin-bottom: var(--space-4);
+}
+.alert-error {
+  background: rgba(228, 0, 43, 0.08);
+  border: 1px solid rgba(228, 0, 43, 0.3);
+  color: var(--color-primary-red);
+}
+.alert-success {
+  background: rgba(30, 126, 52, 0.08);
+  border: 1px solid rgba(30, 126, 52, 0.3);
+  color: #1e7e34;
+}
+
+/* Auth page layout */
+.auth-page {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+}
+.auth-card {
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-lg);
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
