@@ -440,7 +440,6 @@ function UsersTab() {
   );
 }
 
-}
 
 /* ═══════════════════════════════════
    TAB: LEADERBOARD
