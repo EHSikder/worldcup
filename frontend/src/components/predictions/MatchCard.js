@@ -22,8 +22,8 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
   
   const homeTeamName = match.home_team?.name || match.home_placeholder || 'TBD';
   const awayTeamName = match.away_team?.name || match.away_placeholder || 'TBD';
-  const homeFlag = match.home_team?.flag_url || 'https://flagcdn.com/w80/xx.png';
-  const awayFlag = match.away_team?.flag_url || 'https://flagcdn.com/w80/xx.png';
+  const homeFlag = match.home_team?.flag_url || 'https://flagcdn.com/w160/xx.png';
+  const awayFlag = match.away_team?.flag_url || 'https://flagcdn.com/w160/xx.png';
 
   const handleWinnerClick = (winner) => {
     if (isLocked || !match.home_team || !match.away_team) return;
@@ -119,8 +119,8 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
       {/* Teams Area */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', padding: '0 10px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', border: '1px solid #F3F4F6', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', marginBottom: 12 }}>
-            <img src={homeFlag} alt={homeTeamName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ width: 80, height: 54, borderRadius: '10px', overflow: 'hidden', border: '1px solid #F3F4F6', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', marginBottom: 12, background: '#F9FAFB' }}>
+            <img src={homeFlag} alt={homeTeamName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#111827', textAlign: 'center' }}>{homeTeamName}</span>
         </div>
@@ -130,8 +130,8 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', border: '1px solid #F3F4F6', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', marginBottom: 12 }}>
-            <img src={awayFlag} alt={awayTeamName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ width: 80, height: 54, borderRadius: '10px', overflow: 'hidden', border: '1px solid #F3F4F6', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', marginBottom: 12, background: '#F9FAFB' }}>
+            <img src={awayFlag} alt={awayTeamName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#111827', textAlign: 'center' }}>{awayTeamName}</span>
         </div>
