@@ -230,6 +230,10 @@ function DashboardTab({ stats, onRefresh }) {
 /* ═══════════════════════════════════
    TAB: USERS
    ═══════════════════════════════════ */
+
+/* ═══════════════════════════════════
+   TAB: USERS
+   ═══════════════════════════════════ */
 function UsersTab() {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
@@ -252,7 +256,6 @@ function UsersTab() {
 
   useEffect(() => { fetchUsers(); }, [page]);
 
-  // Debounce search
   useEffect(() => {
     const t = setTimeout(() => { setPage(1); fetchUsers(); }, 400);
     return () => clearTimeout(t);
@@ -281,55 +284,71 @@ function UsersTab() {
       <div className="admin-header">
         <h2>Users ({pagination.total || 0})</h2>
         <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-          <button className="btn btn-secondary btn-sm" onClick={() => handleExport('csv')}>CSV</button>
-          <button className="btn btn-secondary btn-sm" onClick={() => handleExport('xlsx')}>XLSX</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => handleExport('csv')}>⬇ CSV</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => handleExport('xlsx')}>⬇ XLSX</button>
         </div>
       </div>
 
       <div style={{ marginBottom: 'var(--space-4)' }}>
-        <input className="form-input" placeholder="Search by name, email, or mobile..." value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: 420 }} />
+        <input className="form-input" placeholder="Search by name, display name, email, or mobile..." value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: 420 }} />
       </div>
 
       {loading ? (
         <div className="loading-page" style={{ minHeight: '20vh' }}><div className="spinner spinner-lg" style={{ color: 'var(--color-gold)' }} /></div>
       ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Mobile</th>
-              <th>Civil ID</th>
-              <th>Status</th>
-              <th>Points</th>
-              <th>Joined</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(u => (
-              <tr key={u.id}>
-                <td style={{ fontWeight: 600 }}>{u.full_name}</td>
-                <td style={{ color: 'var(--color-text-muted)', fontSize: 'var(--fs-xs)' }}>{u.email}</td>
-                <td style={{ color: 'var(--color-text-muted)', fontSize: 'var(--fs-xs)' }}>{u.mobile_number}</td>
-                <td style={{ fontFamily: 'monospace', fontSize: 'var(--fs-xs)' }}>{u.civil_id}</td>
-                <td>
-                  <span className={`badge ${u.has_submitted_prediction ? 'badge-green' : 'badge-muted'}`}>
-                    {u.has_submitted_prediction ? 'Submitted' : 'Pending'}
-                  </span>
-                </td>
-                <td><span className="points-display" style={{ fontSize: 'var(--fs-sm)' }}>{u.total_points || 0}</span></td>
-                <td style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-text-muted)' }}>{new Date(u.created_at).toLocaleDateString()}</td>
-                <td>
-                  <button className="btn btn-ghost btn-sm" onClick={() => viewPredictions(u)}>View</button>
-                </td>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Full Name</th>
+                <th>Display Name</th>
+                <th>Company</th>
+                <th>Email</th>
+                <th>Mobile</th>
+                <th>Civil ID</th>
+                <th>Heard Via</th>
+                <th>Status</th>
+                <th>Points</th>
+                <th>Joined</th>
+                <th></th>
               </tr>
-            ))}
-            {users.length === 0 && (
-              <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: 'var(--space-8)' }}>No users found</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map(u => (
+                <tr key={u.id}>
+                  <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{u.full_name}</td>
+                  <td style={{ color: 'var(--color-text-muted)', fontSize: 'var(--fs-xs)', whiteSpace: 'nowrap' }}>
+                    {u.display_name || <span style={{ opacity: 0.4 }}>—</span>}
+                  </td>
+                  <td style={{ color: 'var(--color-text-muted)', fontSize: 'var(--fs-xs)', whiteSpace: 'nowrap' }}>
+                    {u.company_name || <span style={{ opacity: 0.4 }}>—</span>}
+                  </td>
+                  <td style={{ color: 'var(--color-text-muted)', fontSize: 'var(--fs-xs)' }}>{u.email}</td>
+                  <td style={{ color: 'var(--color-text-muted)', fontSize: 'var(--fs-xs)', whiteSpace: 'nowrap' }}>{u.mobile_number}</td>
+                  <td style={{ fontFamily: 'monospace', fontSize: 'var(--fs-xs)' }}>
+                    {u.civil_id || <span style={{ opacity: 0.4 }}>—</span>}
+                  </td>
+                  <td style={{ fontSize: 'var(--fs-xs)', maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={u.hear_about_us}>
+                    {u.hear_about_us || <span style={{ opacity: 0.4 }}>—</span>}
+                  </td>
+                  <td>
+                    <span className={`badge ${u.has_submitted_prediction ? 'badge-green' : 'badge-muted'}`}>
+                      {u.has_submitted_prediction ? 'Submitted' : 'Pending'}
+                    </span>
+                  </td>
+                  <td><span className="points-display" style={{ fontSize: 'var(--fs-sm)' }}>{u.total_points || 0}</span></td>
+                  <td style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{new Date(u.created_at).toLocaleDateString()}</td>
+                  <td>
+                    <button className="btn btn-ghost btn-sm" onClick={() => viewPredictions(u)}>View</button>
+                  </td>
+                </tr>
+              ))}
+              {users.length === 0 && (
+                <tr><td colSpan={11} style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: 'var(--space-8)' }}>No users found</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {pagination.pages > 1 && (
@@ -345,10 +364,26 @@ function UsersTab() {
         <div className="modal-backdrop" onClick={() => { setSelectedUser(null); setUserPreds(null); }}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 640 }}>
             <div className="modal-header">
-              <h3>{selectedUser.full_name} — Predictions</h3>
+              <div>
+                <h3>{selectedUser.full_name}</h3>
+                {selectedUser.display_name && (
+                  <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-text-muted)', marginTop: 2 }}>
+                    Display: <strong>{selectedUser.display_name}</strong>
+                    {selectedUser.company_name && <> · {selectedUser.company_name}</>}
+                  </div>
+                )}
+              </div>
               <button className="modal-close" onClick={() => { setSelectedUser(null); setUserPreds(null); }}>&times;</button>
             </div>
             <div className="modal-body">
+              {/* User detail strip */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)', marginBottom: 'var(--space-4)', padding: 'var(--space-3)', background: 'var(--color-surface-dark)', borderRadius: 'var(--radius-md)', fontSize: 'var(--fs-xs)', color: 'var(--color-text-muted)' }}>
+                {selectedUser.email && <span>📧 {selectedUser.email}</span>}
+                {selectedUser.mobile_number && <span>📱 {selectedUser.mobile_number}</span>}
+                {selectedUser.civil_id && <span>🪪 {selectedUser.civil_id}</span>}
+                {selectedUser.hear_about_us && <span>💬 {selectedUser.hear_about_us}</span>}
+              </div>
+
               {!userPreds ? (
                 <div className="loading-page" style={{ minHeight: '10vh' }}><div className="spinner" style={{ color: 'var(--color-gold)' }} /></div>
               ) : (
@@ -403,6 +438,8 @@ function UsersTab() {
       )}
     </div>
   );
+}
+
 }
 
 /* ═══════════════════════════════════
