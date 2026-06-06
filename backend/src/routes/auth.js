@@ -14,11 +14,9 @@ router.post('/firebase-login', async (req, res, next) => {
     const { token } = req.body;
     if (!token) return res.status(400).json({ success: false, message: 'No token provided' });
 
-    // Verify token
     const decodedToken = await admin.auth().verifyIdToken(token);
     const { email } = decodedToken;
 
-    // For email/password users, require email verification
     const signInProvider = decodedToken.firebase?.sign_in_provider;
     if (signInProvider === 'password' && !decodedToken.email_verified) {
       return res.status(403).json({
@@ -28,7 +26,6 @@ router.post('/firebase-login', async (req, res, next) => {
       });
     }
 
-    // Check if user exists
     const { data: user, error } = await supabase
       .from('users')
       .select('id, full_name, email, mobile_number, jwt_token_version, favorite_team_id')
@@ -36,14 +33,12 @@ router.post('/firebase-login', async (req, res, next) => {
       .single();
 
     if (error || !user) {
-      // User doesn't exist, they need to sign up
       return res.status(404).json({
         success: false,
         message: 'Account not found. Please sign up first.'
       });
     }
 
-    // User exists, generate our custom JWT
     const jwtToken = signUserToken({
       userId: user.id,
       email: user.email,
@@ -72,18 +67,16 @@ router.post('/firebase-login', async (req, res, next) => {
 
 /**
  * POST /api/auth/firebase-signup
- * Receives Firebase ID token, checks if user exists. If they don't, signals to complete profile.
+ * Receives Firebase ID token, checks if user exists. If not, signals to complete profile.
  */
 router.post('/firebase-signup', async (req, res, next) => {
   try {
     const { token } = req.body;
     if (!token) return res.status(400).json({ success: false, message: 'No token provided' });
 
-    // Verify token
     const decodedToken = await admin.auth().verifyIdToken(token);
     const { email, name, uid } = decodedToken;
 
-    // For email/password users, require email verification
     const signInProvider = decodedToken.firebase?.sign_in_provider;
     if (signInProvider === 'password' && !decodedToken.email_verified) {
       return res.status(403).json({
@@ -93,22 +86,19 @@ router.post('/firebase-signup', async (req, res, next) => {
       });
     }
 
-    // Check if user exists
-    const { data: user, error } = await supabase
+    const { data: user } = await supabase
       .from('users')
       .select('id')
       .eq('email', email)
       .single();
 
     if (user) {
-      // User already exists, they should log in
       return res.status(409).json({
         success: false,
         message: 'Account already exists. Please log in.'
       });
     }
 
-    // User doesn't exist, tell frontend to prompt for profile completion
     return res.json({
       success: true,
       requiresProfileCompletion: true,
@@ -122,17 +112,30 @@ router.post('/firebase-signup', async (req, res, next) => {
 
 /**
  * POST /api/auth/complete-profile
- * Creates a new user after Google Sign-in with additional profile info.
+ * Creates a new user after sign-in with additional profile info.
+ * New fields: display_name, company_name, hear_about_us
+ * civil_id is now optional.
  */
 router.post('/complete-profile', async (req, res, next) => {
   try {
-    const { token, mobile_number, civil_id, favorite_team_id, full_name } = req.body;
-    if (!token || !mobile_number || !civil_id || !favorite_team_id) {
-      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    const {
+      token,
+      mobile_number,
+      civil_id,
+      favorite_team_id,
+      full_name,
+      display_name,
+      company_name,
+      hear_about_us,
+    } = req.body;
+
+    // Required fields
+    if (!token || !mobile_number || !favorite_team_id || !full_name || !display_name) {
+      return res.status(400).json({ success: false, message: 'Missing required fields: full_name, display_name, mobile_number, favorite_team_id' });
     }
 
-    // Validate civil_id format
-    if (!/^\d{12}$/.test(civil_id)) {
+    // Validate civil_id only if provided
+    if (civil_id && civil_id.trim() !== '' && !/^\d{12}$/.test(civil_id)) {
       return res.status(400).json({
         success: false,
         message: 'Civil ID must be exactly 12 numeric digits.',
@@ -140,11 +143,10 @@ router.post('/complete-profile', async (req, res, next) => {
       });
     }
 
-    // Verify token again to ensure identity
     const decodedToken = await admin.auth().verifyIdToken(token);
     const { email, name, uid } = decodedToken;
 
-    // Double check email isn't already taken
+    // Check email isn't already taken
     const { data: existingUser } = await supabase
       .from('users')
       .select('id')
@@ -155,7 +157,7 @@ router.post('/complete-profile', async (req, res, next) => {
       return res.status(409).json({ success: false, message: 'Account already exists' });
     }
 
-    // Check if mobile number is taken
+    // Check mobile isn't already taken
     const { data: existingMobile } = await supabase
       .from('users')
       .select('id')
@@ -166,21 +168,23 @@ router.post('/complete-profile', async (req, res, next) => {
       return res.status(409).json({ success: false, message: 'Mobile number already registered.' });
     }
 
-    // Create user
     const insertData = {
       full_name: full_name || name || 'User',
+      display_name: display_name.trim(),
+      company_name: company_name?.trim() || null,
+      hear_about_us: hear_about_us || null,
       email,
       firebase_uid: uid,
       mobile_number,
-      civil_id,
+      civil_id: (civil_id && civil_id.trim()) ? civil_id.trim() : null,
       favorite_team_id,
-      is_verified: true, // Google accounts are pre-verified
+      is_verified: true,
     };
 
     const { data: user, error } = await supabase
       .from('users')
       .insert(insertData)
-      .select('id, full_name, email, mobile_number, jwt_token_version, favorite_team_id')
+      .select('id, full_name, display_name, email, mobile_number, jwt_token_version, favorite_team_id')
       .single();
 
     if (error) {
@@ -188,7 +192,6 @@ router.post('/complete-profile', async (req, res, next) => {
       return res.status(500).json({ success: false, message: 'Failed to create account.' });
     }
 
-    // Generate JWT
     const jwtToken = signUserToken({
       userId: user.id,
       email: user.email,
@@ -203,6 +206,7 @@ router.post('/complete-profile', async (req, res, next) => {
         user: {
           id: user.id,
           full_name: user.full_name,
+          display_name: user.display_name,
           email: user.email,
           mobile_number: user.mobile_number,
           favorite_team_id: user.favorite_team_id,
@@ -224,7 +228,8 @@ router.get('/me', auth, async (req, res, next) => {
     const { data: user, error } = await supabase
       .from('users')
       .select(`
-        id, full_name, mobile_number, email, civil_id, favorite_team_id,
+        id, full_name, display_name, company_name, hear_about_us,
+        mobile_number, email, civil_id, favorite_team_id,
         is_verified, has_submitted_prediction, total_points, created_at, firebase_uid
       `)
       .eq('id', req.user.id)
@@ -232,7 +237,6 @@ router.get('/me', auth, async (req, res, next) => {
 
     if (error) throw error;
 
-    // Get favorite team info separately
     let favorite_team = null;
     if (user.favorite_team_id) {
       const { data: team } = await supabase
@@ -243,7 +247,6 @@ router.get('/me', auth, async (req, res, next) => {
       favorite_team = team;
     }
 
-    // Get prediction stats
     const { data: predictions } = await supabase
       .from('predictions')
       .select('match_number, points_earned')
