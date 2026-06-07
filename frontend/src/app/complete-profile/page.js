@@ -102,7 +102,11 @@ export default function CompleteProfilePage() {
       setError('Please tell us how you heard about us.');
       return;
     }
-
+    if (!formData.companyName.trim()) {
+      setError('Company Name is required.');
+      return;
+    }
+    
     setSubmitting(true);
     setError(null);
 
@@ -125,7 +129,7 @@ export default function CompleteProfilePage() {
         favorite_team_id: formData.favoriteTeamId,
         full_name: formData.fullName,
         display_name: formData.displayName,
-        company_name: formData.companyName.trim() || null,
+        company_name: formData.companyName.trim(),
         hear_about_us: hearAboutFinal,
       });
 
@@ -202,10 +206,7 @@ export default function CompleteProfilePage() {
 
               {/* Company Name */}
               <div className="form-group">
-                <label className="form-label">
-                  Company Name
-                  <span style={{ fontWeight: 400, fontSize: '0.78rem', color: 'var(--color-text-muted)', marginLeft: 6 }}>Required</span>
-                </label>
+                <label className="form-label">{t('profile_name') || 'Full Name'} <span style={{ color: 'var(--color-primary-red)' }}>*</span></label>                
                 <input
                   type="text"
                   className="form-input"
