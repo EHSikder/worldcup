@@ -1,7 +1,9 @@
+// frontend/src/app/layout.js
 import { Inter, Cairo } from 'next/font/google';
 import { AuthProvider } from '@/context/AuthContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 import ConditionalHeader from '@/components/layout/ConditionalHeader';
+import NotificationBootstrap from '@/components/NotificationBootstrap';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -30,6 +32,8 @@ export default function RootLayout({ children }) {
           <AuthProvider>
             <ConditionalHeader />
             <main>{children}</main>
+            {/* Registers SW and shows post-signup notification prompt */}
+            <NotificationBootstrap />
           </AuthProvider>
         </LanguageProvider>
       </body>
