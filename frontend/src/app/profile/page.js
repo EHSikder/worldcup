@@ -106,7 +106,7 @@ export default function ProfilePage() {
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-        <Link href="/bracket" className="btn btn-primary">Edit Predictions</Link>
+        <Link href="/predictions" className="btn btn-primary">Edit Predictions</Link>
         <Link href="/leaderboard" className="btn btn-secondary">Leaderboard</Link>
         <button className="btn btn-ghost" onClick={() => { logout(); router.push('/'); }} style={{ color: 'var(--color-error)' }}>Logout</button>
       </div>
