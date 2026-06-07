@@ -7,6 +7,7 @@ import MatchCard from '@/components/predictions/MatchCard';
 import Footer from '@/components/layout/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import api from '@/lib/api';
+import { NotificationBanner } from '@/components/NotificationPrompt';
 
 export default function PredictionsPage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -172,6 +173,9 @@ export default function PredictionsPage() {
   return (
     <>
       <div className="container" style={{ padding: 'var(--space-8) var(--space-4)', maxWidth: 800, paddingBottom: 100 }}>
+        {/* Notification Banner */}
+        <NotificationBanner />
+
         {/* Prize Pool Banner */}
         <div style={{
           background: 'linear-gradient(135deg, #5F27E4 0%, #3d1a9e 100%)',
