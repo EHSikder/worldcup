@@ -1,14 +1,10 @@
 // frontend/src/lib/notifications.js
-// ─────────────────────────────────────────────────────────────
-//  Push notification helpers — permission, subscription, storage
-// ─────────────────────────────────────────────────────────────
 
 import api from '@/lib/api';
 
 const STORAGE_KEY = 'wc2026_push_dismissed';
 const SUBSCRIBED_KEY = 'wc2026_push_subscribed';
 
-// VAPID public key — set NEXT_PUBLIC_VAPID_PUBLIC_KEY in your .env.local
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
 
 function urlBase64ToUint8Array(base64String) {
@@ -18,7 +14,6 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
 
-/** True if the browser supports push notifications */
 export function isPushSupported() {
   return (
     typeof window !== 'undefined' &&
@@ -28,19 +23,16 @@ export function isPushSupported() {
   );
 }
 
-/** Current browser permission state: 'default' | 'granted' | 'denied' */
 export function getPermissionState() {
   if (typeof window === 'undefined') return 'default';
   return Notification.permission;
 }
 
-/** Has the user actively subscribed (our own flag) */
 export function isSubscribed() {
   if (typeof window === 'undefined') return false;
   return localStorage.getItem(SUBSCRIBED_KEY) === 'true';
 }
 
-/** Has the user already dismissed the prompt without enabling */
 export function hasDismissed() {
   if (typeof window === 'undefined') return false;
   return localStorage.getItem(STORAGE_KEY) === 'true';
@@ -50,60 +42,59 @@ export function markDismissed() {
   if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, 'true');
 }
 
-/** Register SW and request push permission, then send subscription to server */
 export async function enablePushNotifications() {
   if (!isPushSupported()) throw new Error('Push not supported in this browser');
 
-  // Register service worker first (needed before requestPermission in some browsers)
-  const registration = await navigator.serviceWorker.register('/sw.js');
-  await navigator.serviceWorker.ready;
+  // Step 1: Register SW
+  await navigator.serviceWorker.register('/sw.js');
 
-  // ── Show Chrome's native "Allow notifications?" popup ──────
-  // This must happen before any VAPID check so the browser dialog
-  // always appears when the user clicks Enable.
+  // Step 2: Wait for the SW to be fully ready — use navigator.serviceWorker.ready
+  // which resolves with the ACTIVE registration (not the installing one)
+  const readyRegistration = await navigator.serviceWorker.ready;
+
+  // Step 3: Ask for permission (shows Chrome's native popup)
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') throw new Error('Permission denied');
 
-  // Now check VAPID — if missing, permission is granted but we can't subscribe yet
+  // Step 4: Check VAPID key is set
   if (!VAPID_PUBLIC_KEY) {
-    throw new Error(
-      'VAPID key not configured. Add NEXT_PUBLIC_VAPID_PUBLIC_KEY to your .env.local and restart the dev server.'
-    );
+    throw new Error('NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set in Vercel environment variables');
   }
 
-  // Subscribe
-  const subscription = await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-  });
+  // Step 5: Subscribe using the READY registration (not the one from .register())
+  let subscription;
+  try {
+    subscription = await readyRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+  } catch (err) {
+    throw new Error('Failed to create push subscription: ' + err.message);
+  }
 
-  // Send subscription to backend
+  // Step 6: Send to backend
   await api.post('/api/notifications/subscribe', {
     subscription: subscription.toJSON(),
   });
 
   localStorage.setItem(SUBSCRIBED_KEY, 'true');
-  localStorage.removeItem(STORAGE_KEY); // clear any dismiss flag
+  localStorage.removeItem(STORAGE_KEY);
   return true;
 }
 
-/** Unsubscribe from push */
 export async function disablePushNotifications() {
   if (!isPushSupported()) return;
   try {
-    const registration = await navigator.serviceWorker.getRegistration('/sw.js');
-    if (registration) {
-      const sub = await registration.pushManager.getSubscription();
-      if (sub) {
-        await api.post('/api/notifications/unsubscribe', { endpoint: sub.endpoint });
-        await sub.unsubscribe();
-      }
+    const readyRegistration = await navigator.serviceWorker.ready;
+    const sub = await readyRegistration.pushManager.getSubscription();
+    if (sub) {
+      await api.post('/api/notifications/unsubscribe', { endpoint: sub.endpoint });
+      await sub.unsubscribe();
     }
   } catch { /* ignore */ }
   localStorage.removeItem(SUBSCRIBED_KEY);
 }
 
-/** Register the SW silently (needed on every page load so SW stays active) */
 export async function registerServiceWorker() {
   if (!isPushSupported()) return;
   try {
