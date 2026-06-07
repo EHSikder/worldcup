@@ -5,6 +5,7 @@ const env = require('./config/env');
 const errorHandler = require('./middleware/errorHandler');
 const { generalLimiter } = require('./middleware/rateLimit');
 const { startSyncCron } = require('./cron/syncMatches');
+const { startNotificationCron } = require('./cron/notificationCron');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -13,6 +14,7 @@ const matchRoutes = require('./routes/matches');
 const predictionRoutes = require('./routes/predictions');
 const leaderboardRoutes = require('./routes/leaderboard');
 const adminRoutes = require('./routes/admin');
+const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 
@@ -26,19 +28,12 @@ const allowedOrigins = env.FRONTEND_URL
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (server-to-server, curl, etc.)
     if (!origin) return callback(null, true);
-    
-    // Allow wildcard if configured
-    if (allowedOrigins.includes('*')) {
-      return callback(null, true);
-    }
-    
+    if (allowedOrigins.includes('*')) return callback(null, true);
     if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
-    
-    console.error(`CORS Error: Origin ${origin} not allowed. Allowed origins: ${allowedOrigins.join(', ')}`);
+    console.error(`CORS Error: Origin ${origin} not allowed.`);
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -68,6 +63,7 @@ app.use('/api/matches', matchRoutes);
 app.use('/api/predictions', predictionRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // ── 404 Handler ─────────────────────────────────────────────
 app.use((req, res) => {
@@ -80,7 +76,7 @@ app.use((req, res) => {
 // ── Error Handler ───────────────────────────────────────────
 app.use(errorHandler);
 
-// ── Start Server & Cron ─────────────────────────────────────
+// ── Start Server & Crons ────────────────────────────────────
 app.listen(env.PORT, () => {
   console.log(`
   ⚽ ═══════════════════════════════════════════════ ⚽
@@ -93,8 +89,8 @@ app.listen(env.PORT, () => {
   ⚽ ═══════════════════════════════════════════════ ⚽
   `);
 
-  // Start the match sync cron job
   startSyncCron();
+  startNotificationCron();
 });
 
 module.exports = app;
