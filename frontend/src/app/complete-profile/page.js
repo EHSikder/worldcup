@@ -204,7 +204,7 @@ export default function CompleteProfilePage() {
               <div className="form-group">
                 <label className="form-label">
                   Company Name
-                  <span style={{ fontWeight: 400, fontSize: '0.78rem', color: 'var(--color-text-muted)', marginLeft: 6 }}>optional</span>
+                  <span style={{ fontWeight: 400, fontSize: '0.78rem', color: 'var(--color-text-muted)', marginLeft: 6 }}>Required</span>
                 </label>
                 <input
                   type="text"
