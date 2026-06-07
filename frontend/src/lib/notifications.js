@@ -53,15 +53,23 @@ export function markDismissed() {
 /** Register SW and request push permission, then send subscription to server */
 export async function enablePushNotifications() {
   if (!isPushSupported()) throw new Error('Push not supported in this browser');
-  if (!VAPID_PUBLIC_KEY) throw new Error('VAPID_PUBLIC_KEY not configured');
 
-  // Register service worker
+  // Register service worker first (needed before requestPermission in some browsers)
   const registration = await navigator.serviceWorker.register('/sw.js');
   await navigator.serviceWorker.ready;
 
-  // Request permission
+  // ── Show Chrome's native "Allow notifications?" popup ──────
+  // This must happen before any VAPID check so the browser dialog
+  // always appears when the user clicks Enable.
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') throw new Error('Permission denied');
+
+  // Now check VAPID — if missing, permission is granted but we can't subscribe yet
+  if (!VAPID_PUBLIC_KEY) {
+    throw new Error(
+      'VAPID key not configured. Add NEXT_PUBLIC_VAPID_PUBLIC_KEY to your .env.local and restart the dev server.'
+    );
+  }
 
   // Subscribe
   const subscription = await registration.pushManager.subscribe({
