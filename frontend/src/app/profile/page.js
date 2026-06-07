@@ -6,6 +6,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { ROUND_NAMES } from '@/lib/constants';
+import { NotificationBanner } from '@/components/NotificationPrompt';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -36,6 +37,9 @@ export default function ProfilePage() {
   return (
     <div className="container" style={{ padding: 'var(--space-8) var(--space-6)', maxWidth: 800 }}>
       <h1 style={{ marginBottom: 'var(--space-8)' }}>My Profile</h1>
+
+      {/* ── Notification Banner ─────────────────────────────── */}
+      <NotificationBanner />
 
       {/* Points Banner */}
       <div className="card card-highlighted" style={{ textAlign: 'center', marginBottom: 'var(--space-6)', padding: 'var(--space-8)' }}>
@@ -85,6 +89,8 @@ export default function ProfilePage() {
         <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
           {[
             ['Name', profile.full_name],
+            ['Display Name', profile.display_name || '—'],
+            ['Company', profile.company_name || '—'],
             ['Email', profile.email],
             ['Mobile', profile.mobile_number],
             ['Favorite Team', profile.favorite_team?.name || 'Not selected'],
