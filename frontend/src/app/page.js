@@ -47,27 +47,23 @@ export default function HomePage() {
     <>
       {/* Hero */}
       <section className="hero-new" style={{ direction: 'ltr' }}>
-        {/* Background image — flips in RTL via CSS class */}
-        <div className="hero-new-bg" style={{ backgroundImage: "url('/images/fans-bg.jpg')" }}></div>
+        {/* Desktop background — switches by locale */}
+        <div
+          className="hero-new-bg hero-bg-desktop"
+          style={{ backgroundImage: locale === 'ar' ? "url('/images/banner-desktop-ar.jpg')" : "url('/images/banner-desktop-en.jpg')" }}
+        />
+        {/* Mobile background — switches by locale */}
+        <div
+          className="hero-new-bg hero-bg-mobile"
+          style={{ backgroundImage: locale === 'ar' ? "url('/images/banner-mobile-ar.jpg')" : "url('/images/banner-mobile-en.jpg')" }}
+        />
 
-        {/* Left Side — Desktop only */}
-        <div className="hero-new-left">
-          <div className="hero-left-content" style={{ direction: locale === 'ar' ? 'rtl' : 'ltr' }}>
-            <div className="hero-left-text"> 
-              {locale === 'ar' ? (
-                <>{t('hero_left_line1')}<br/>{t('hero_left_line2')}<br/>{t('hero_left_line3')}</>
-              ) : (
-                <>PREDICT.<br/>COMPETE.<br/>WIN.</>
-              )}          
-            </div>
-            <div className="hero-logo-container">           
-            </div>
-          </div>
-        </div>
+        {/* Left Side — image only, no text */}
+        <div className="hero-new-left" />
 
         {/* Right Side — Always visible */}
-        <div className="hero-new-right" style={{ direction: locale === 'ar' ? 'rtl' : 'ltr' }}>
-          <div className="hero-right-content">
+        <div className="hero-new-right" style={{ direction: locale === 'ar' ? 'rtl' : 'ltr', justifyContent: 'flex-end', paddingRight: 'clamp(24px, 6vw, 80px)' }}>
+          <div className="hero-right-content" style={{ textAlign: locale === 'ar' ? 'right' : 'left' }}>
             <h2 className="hero-subtitle">{locale === 'ar' ? t('hero_right_subtitle') : 'R-BUILD WORLD CUP CHALLENGE'}</h2>
             <h1 className="hero-title">{locale === 'ar' ? t('hero_right_title') : 'WIN $1000'}</h1>
             <p className="hero-desc">
