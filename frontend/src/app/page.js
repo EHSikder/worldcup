@@ -80,6 +80,7 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+              }
 
       {/* How It Works */}
       <section className="section" style={{ background: 'var(--color-surface-dark)' }}>
