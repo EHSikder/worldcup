@@ -144,7 +144,6 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
         </div>
       </div>
 
-      {/* Winner Selector Buttons */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: prediction?.winner ? '24px' : '0' }}>
         <button 
           onClick={() => handleWinnerClick('home')}
