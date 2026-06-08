@@ -56,8 +56,7 @@ export default function HomePage() {
             <div className="hero-left-text">
               {locale === 'ar' ? (
                 <>{t('hero_left_line1')}<br/>{t('hero_left_line2')}<br/>{t('hero_left_line3')}</>
-              ) : (
-                <>PREDICT.<br/>COMPETE.<br/>WIN.</>
+              ) : (               
               )}
             </div>
             <div className="hero-logo-container">           
