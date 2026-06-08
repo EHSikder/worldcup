@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
    WC2026 PREDICTOR — COMPLETE DESIGN SYSTEM
    ═══════════════════════════════════════════════════════════ */
-
+.hero-new-bg {
 /* ── CSS Custom Properties ────────────────────────────────── */
 :root {
   /* Colors */
@@ -609,6 +609,15 @@ h4 { font-size: var(--fs-xl); }
   z-index: 0;
 }
 
+/* Show desktop image, hide mobile image by default */
+.hero-bg-desktop { display: block; }
+.hero-bg-mobile  { display: none;  }
+
+@media (max-width: 768px) {
+  .hero-bg-desktop { display: none;  }
+  .hero-bg-mobile  { display: block; }
+}
+
 /* Flip background image horizontally when in RTL mode */
 .hero-bg-rtl {
   transform: scaleX(-1);
@@ -687,9 +696,9 @@ h4 { font-size: var(--fs-xl); }
 }
 
 .hero-right-content {
-  text-align: center;
+  text-align: left;
   color: #FFFFFF;
-  max-width: 600px;
+  max-width: 520px;
 }
 
 .hero-subtitle {
@@ -717,17 +726,15 @@ h4 { font-size: var(--fs-xl); }
   margin-bottom: var(--space-6);
   line-height: 1.5;
   max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .hero-actions {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
 }
-
+   
 .btn-predict {
   background: #E4002B;
   color: #FFFFFF;
