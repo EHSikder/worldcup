@@ -50,21 +50,6 @@ export default function HomePage() {
         {/* Background image — flips in RTL via CSS class */}
         <div className="hero-new-bg" style={{ backgroundImage: "url('/images/fans-bg.jpg')" }}></div>
 
-        {/* Left Side — Desktop only */}
-        <div className="hero-new-left">
-          <div className="hero-left-content" style={{ direction: locale === 'ar' ? 'rtl' : 'ltr' }}>
-            <div className="hero-left-text">
-              {locale === 'ar' ? (
-                <>{t('hero_left_line1')}<br/>{t('hero_left_line2')}<br/>{t('hero_left_line3')}</>
-              ) : (
-                <>PREDICT.<br/>COMPETE.<br/>WIN.</>
-              )}
-            </div>
-            <div className="hero-logo-container">           
-            </div>
-          </div>
-        </div>
-
         {/* Right Side — Always visible */}
         <div className="hero-new-right" style={{ direction: locale === 'ar' ? 'rtl' : 'ltr' }}>
           <div className="hero-right-content">
