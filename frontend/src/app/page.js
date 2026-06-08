@@ -66,6 +66,21 @@ export default function HomePage() {
         </div>
       </section>
 
+        {/* Left Side — Desktop only */}
+        <div className="hero-new-left">
+          <div className="hero-left-content" style={{ direction: locale === 'ar' ? 'rtl' : 'ltr' }}>
+            <div className="hero-left-text">
+              {locale === 'ar' ? (
+                <>{t('hero_left_line1')}<br/>{t('hero_left_line2')}<br/>{t('hero_left_line3')}</>
+              ) : (
+                <>PREDICT.<br/>COMPETE.<br/>WIN.</>
+              )}
+            </div>
+            <div className="hero-logo-container">           
+            </div>
+          </div>
+        </div>
+
       {/* How It Works */}
       <section className="section" style={{ background: 'var(--color-surface-dark)' }}>
         <div className="container">
