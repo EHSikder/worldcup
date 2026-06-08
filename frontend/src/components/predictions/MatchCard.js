@@ -143,7 +143,8 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
           <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#111827', textAlign: 'center' }}>{awayTeamName}</span>
         </div>
       </div>
-
+              
+      {/* Winner Selector Buttons */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: prediction?.winner ? '24px' : '0' }}>
         <button 
           onClick={() => handleWinnerClick('home')}
