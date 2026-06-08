@@ -120,12 +120,16 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
       )}
       
       {/* Teams Area */}
-      <div style={{ width: 80, height: 54, borderRadius: '10px', overflow: 'hidden', border: '1px solid #F3F4F6', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', marginBottom: 12, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', padding: '0 10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+          <div style={{ width: 80, height: 54, borderRadius: '10px', overflow: 'hidden', border: '1px solid #F3F4F6', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', marginBottom: 12, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {homeTBC ? (
               <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#8899B4', letterSpacing: '0.05em' }}>TBC</span>
             ) : (
               <img src={homeFlag} alt={homeTeamName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             )}
+          </div>
+          <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#111827', textAlign: 'center' }}>{homeTeamName}</span>
         </div>
 
         <div style={{ background: '#F9FAFB', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem', color: '#111827' }}>
