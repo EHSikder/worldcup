@@ -134,7 +134,16 @@ export default function LeaderboardPage() {
     <>
       <div className="container" style={{ padding: 'var(--space-6) var(--space-4)', minHeight: '80vh', maxWidth: 600, paddingBottom: currentUser ? 100 : 40 }}>
         <div style={{ marginBottom: 20 }}>
-          <div style={{ width: '100%', overflow: 'hidden', borderRadius: 20, lineHeight: 0 }}>
+          <div
+  style={{
+    width: '100%',
+    maxWidth: '600px',
+    margin: '0 auto',
+    overflow: 'hidden',
+    borderRadius: 20,
+    lineHeight: 0
+  }}
+>
             <picture>
               <source
                 media="(max-width: 768px)"
