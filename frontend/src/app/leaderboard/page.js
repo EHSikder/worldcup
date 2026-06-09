@@ -153,14 +153,22 @@ export default function LeaderboardPage() {
                 }
               />
               <img
-                src={
-                  isArabic
-                    ? '/images/leaderboard/leaderboard-banner-desktop-ar.webp'
-                    : '/images/leaderboard/leaderboard-banner-desktop-en.webp'
-                }
-                alt="Leaderboard banner"
-                style={{ display: 'block', width: '100%', height: 'auto' }}
-              />
+  src={
+    isArabic
+      ? '/images/leaderboard/leaderboard-banner-desktop-ar.webp'
+      : '/images/leaderboard/leaderboard-banner-desktop-en.webp'
+  }
+  alt="Leaderboard banner"
+  width="600"
+  height="132"
+  style={{
+    display: 'block',
+    width: '100%',
+    maxWidth: '600px',
+    height: 'auto',
+    margin: '0 auto'
+  }}
+/>
             </picture>
           </div>
         </div>
