@@ -63,7 +63,7 @@ export default function HomePage() {
 
         {/* Right Side — Always visible */}
         <div className="hero-new-right" style={{ direction: locale === 'ar' ? 'rtl' : 'ltr' }}>
-          <div className="hero-right-content" style={{ textAlign: locale === 'ar' ? 'right' : 'left' }}>
+  <div className="hero-right-content">
             <h2 className="hero-subtitle">{locale === 'ar' ? t('hero_right_subtitle') : 'R-BUILD WORLD CUP CHALLENGE'}</h2>
             <h1 className="hero-title">{locale === 'ar' ? t('hero_right_title') : 'WIN $1000'}</h1>
             <p className="hero-desc">
