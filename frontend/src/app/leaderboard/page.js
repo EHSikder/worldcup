@@ -149,23 +149,23 @@ export default function LeaderboardPage() {
                 media="(max-width: 768px)"
                 srcSet={
                   isArabic
-                    ? '/images/leaderboard/leaderboard-banner-mobile-ar.webp'
-                    : '/images/leaderboard/leaderboard-banner-mobile-en.webp'
+                    ? '/images/leaderboard-banner-mobile-ar.webp'
+                    : '/images/leaderboard-banner-mobile-en.webp'
                 }
               />
               <source
                 media="(min-width: 769px)"
                 srcSet={
                   isArabic
-                    ? '/images/leaderboard/leaderboard-banner-desktop-ar.webp'
-                    : '/images/leaderboard/leaderboard-banner-desktop-en.webp'
+                    ? '/images/leaderboard-banner-desktop-ar.webp'
+                    : '/images/leaderboard-banner-desktop-en.webp'
                 }
               />
               <img
   src={
     isArabic
-      ? '/images/leaderboard/leaderboard-banner-desktop-ar.webp'
-      : '/images/leaderboard/leaderboard-banner-desktop-en.webp'
+      ? '/images/leaderboard-banner-desktop-ar.webp'
+      : '/images/leaderboard-banner-desktop-en.webp'
   }
   alt="Leaderboard banner"
   width="600"
