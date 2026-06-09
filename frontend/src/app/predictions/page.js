@@ -36,9 +36,13 @@ export default function PredictionsPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const resMatches = await api.get('/api/matches');
+        // Fetch matches and predictions in parallel
+        const [resMatches, resPreds] = await Promise.all([
+          api.get('/api/matches'),
+          api.get('/api/predictions'),
+        ]);
+
         const allMatches = resMatches.data;
-        // Sort all matches by kickoff_time for correct chronological order
         allMatches.sort((a, b) => {
           if (!a.kickoff_time) return 1;
           if (!b.kickoff_time) return -1;
@@ -46,21 +50,39 @@ export default function PredictionsPage() {
         });
         setMatches(allMatches);
 
-        // Fetch user predictions
-        const resPreds = await api.get('/api/predictions');
+        // Build a match lookup so we can resolve home/away from winner ID
+        const matchMap = {};
+        allMatches.forEach(m => { matchMap[m.match_number] = m; });
+
         const predsData = resPreds.data.predictions || [];
-        
         const predsObj = {};
+
         predsData.forEach(p => {
+          const match = matchMap[p.match_number];
+
+          // ── FIX: determine winner from match data, not from prediction fields ──
+          // predicted_winner_team_id === null  →  draw was selected
+          // matches home_team.id              →  home was selected
+          // matches away_team.id              →  away was selected
+          let winner = null;
+          if (p.predicted_winner_team_id === null) {
+            winner = 'draw';
+          } else if (match?.home_team?.id && p.predicted_winner_team_id === match.home_team.id) {
+            winner = 'home';
+          } else if (match?.away_team?.id && p.predicted_winner_team_id === match.away_team.id) {
+            winner = 'away';
+          }
+          // If winner is still null it means the prediction exists but the team
+          // hasn't been assigned yet (TBC knockout slot) — skip rendering winner UI
+
           predsObj[p.match_number] = {
-            winner: p.predicted_winner_team_id === p.predicted_home_team_id ? 'home' 
-                  : (p.predicted_winner_team_id === p.predicted_away_team_id ? 'away' : 'draw'),
-            homeScore: p.predicted_home_score,
-            awayScore: p.predicted_away_score,
+            winner,
+            homeScore: p.predicted_home_score ?? 0,
+            awayScore: p.predicted_away_score ?? 0,
             predictedWinnerTeamId: p.predicted_winner_team_id,
             isLocked: p.is_locked,
             lockedReason: p.locked_reason,
-            pointsEarned: p.points_earned
+            pointsEarned: p.points_earned,
           };
         });
         
@@ -73,7 +95,7 @@ export default function PredictionsPage() {
         setLoading(false);
       }
 
-      // Fetch leaderboard for user standing
+      // Fetch leaderboard for user standing (non-blocking)
       try {
         const resLb = await api.get('/api/leaderboard?limit=200');
         const lbData = resLb.data || [];
@@ -82,28 +104,33 @@ export default function PredictionsPage() {
           const me = lbData.find(u => u.id === user.id);
           if (me) setUserStanding(me);
         }
-      } catch(e) {}
+      } catch(e) { /* non-critical */ }
     };
 
     fetchData();
   }, [isAuthenticated]);
 
   useEffect(() => {
-    const isChanged = Object.keys(predictions).some(key => 
-      predictions[key]?.homeScore !== savedPredictions[key]?.homeScore ||
-      predictions[key]?.awayScore !== savedPredictions[key]?.awayScore ||
-      predictions[key]?.winner !== savedPredictions[key]?.winner
-    );
+    const isChanged = Object.keys(predictions).some(key => {
+      const curr = predictions[key];
+      const saved = savedPredictions[key];
+      if (!saved && curr) return true;
+      return (
+        curr?.homeScore !== saved?.homeScore ||
+        curr?.awayScore !== saved?.awayScore ||
+        curr?.winner !== saved?.winner
+      );
+    });
     setHasUnsavedChanges(isChanged && Object.keys(predictions).length > 0);
   }, [predictions, savedPredictions]);
 
-  const handlePredict = (matchId, predictionData) => {
+  const handlePredict = (matchNum, predictionData) => {
     setPredictions(prev => {
       const newPreds = { ...prev };
       if (predictionData === null) {
-        delete newPreds[matchId];
+        delete newPreds[matchNum];
       } else {
-        newPreds[matchId] = predictionData;
+        newPreds[matchNum] = predictionData;
       }
       return newPreds;
     });
@@ -113,32 +140,36 @@ export default function PredictionsPage() {
     if (!user?.id || Object.keys(predictions).length === 0) return;
     
     setSubmitting(true);
+    setError('');
     try {
       const payload = Object.keys(predictions).map(matchNum => {
         const pred = predictions[matchNum];
         const match = matches.find(m => m.match_number == matchNum);
         
+        // Resolve winner team ID from the winner string
         let winnerTeamId = null;
-        if (pred.winner === 'home') winnerTeamId = match.home_team?.id;
-        if (pred.winner === 'away') winnerTeamId = match.away_team?.id;
+        if (pred.winner === 'home') winnerTeamId = match?.home_team?.id || null;
+        if (pred.winner === 'away') winnerTeamId = match?.away_team?.id || null;
+        // draw → winnerTeamId stays null
         
         return {
           match_number: parseInt(matchNum),
-          predicted_winner_team_id: winnerTeamId || null,
+          predicted_winner_team_id: winnerTeamId,
+          // Always send integers, never strings
           predicted_home_score: pred.homeScore != null ? parseInt(pred.homeScore) : 0,
-          predicted_away_score: pred.awayScore != null ? parseInt(pred.awayScore) : 0
+          predicted_away_score: pred.awayScore != null ? parseInt(pred.awayScore) : 0,
         };
       });
 
-      // Always use PUT - it handles both create and update
+      // PUT handles both create and update in one endpoint
       await api.put('/api/predictions', { predictions: payload });
 
-      setSavedPredictions(predictions);
+      setSavedPredictions({ ...predictions });
       setHasUnsavedChanges(false);
       alert(t('pred_success') || 'Predictions saved successfully!');
     } catch (err) {
       console.error('Submit error', err);
-      alert(err.message || 'Error saving predictions');
+      setError(err.message || 'Error saving predictions');
     } finally {
       setSubmitting(false);
     }
@@ -161,19 +192,18 @@ export default function PredictionsPage() {
   const stageOrder = ['group_stage', 'round_of_32', 'round_of_16', 'quarterfinal', 'semifinal', 'third_place', 'final'];
 
   const stageTranslations = {
-    'group_stage': locale === 'ar' ? 'مرحلة المجموعات' : 'Group Stage',
-    'round_of_32': locale === 'ar' ? 'دور الـ 32' : 'Round of 32',
-    'round_of_16': locale === 'ar' ? 'دور الـ 16' : 'Round of 16',
-    'quarterfinal': locale === 'ar' ? 'ربع النهائي' : 'Quarter-Finals',
-    'semifinal': locale === 'ar' ? 'نصف النهائي' : 'Semi-Finals',
-    'third_place': locale === 'ar' ? 'المركز الثالث' : 'Third Place',
-    'final': locale === 'ar' ? 'النهائي' : 'Final',
+    'group_stage':  locale === 'ar' ? 'مرحلة المجموعات' : 'Group Stage',
+    'round_of_32':  locale === 'ar' ? 'دور الـ 32'       : 'Round of 32',
+    'round_of_16':  locale === 'ar' ? 'دور الـ 16'       : 'Round of 16',
+    'quarterfinal': locale === 'ar' ? 'ربع النهائي'      : 'Quarter-Finals',
+    'semifinal':    locale === 'ar' ? 'نصف النهائي'      : 'Semi-Finals',
+    'third_place':  locale === 'ar' ? 'المركز الثالث'    : 'Third Place',
+    'final':        locale === 'ar' ? 'النهائي'          : 'Final',
   };
 
   return (
     <>
       <div className="container" style={{ padding: 'var(--space-8) var(--space-4)', maxWidth: 800, paddingBottom: 100 }}>
-        {/* Notification Banner */}
         <NotificationBanner />
 
         {/* Prize Pool Banner */}
@@ -223,7 +253,7 @@ export default function PredictionsPage() {
               <div>
                 <div style={{ fontWeight: 800, fontSize: '1rem', color: '#111827' }}>{userStanding.full_name} <span style={{ color: '#9CA3AF', fontWeight: 500, fontSize: '0.85rem' }}>{t('pred_you')}</span></div>
                 <div style={{ fontSize: '0.8rem', color: '#6B7280', fontWeight: 500 }}>
-                  {t('pred_rank_label')} #{userStanding.rank}{topPlayer ? ` · ${t('pred_leader_label')}: ${topPlayer.total_points} Points` : ''}
+                  {t('pred_rank_label')} #{userStanding.rank}{topPlayer ? ` · ${t('pred_leader_label')}: ${topPlayer.total_points} pts` : ''}
                 </div>
               </div>
             </div>
@@ -268,6 +298,7 @@ export default function PredictionsPage() {
         })}
       </div>
 
+      {/* Floating Submit Bar */}
       <div style={{ 
         position: 'fixed', 
         bottom: 20, 
@@ -277,7 +308,6 @@ export default function PredictionsPage() {
         background: '#FFFFFF',
         padding: 'var(--space-3) var(--space-4)',
         borderRadius: 30,
-        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
         display: 'flex',
         alignItems: 'center',
         gap: 'var(--space-4)',
@@ -286,7 +316,11 @@ export default function PredictionsPage() {
         transition: 'all 0.3s ease',
         boxShadow: hasUnsavedChanges ? '0 10px 30px rgba(169,223,0,0.25)' : '0 10px 25px rgba(0,0,0,0.15)'
       }}>
-        {hasUnsavedChanges && <span style={{ fontWeight: 700, color: '#1a2e00', fontSize: '0.9rem' }}>{t('pred_unsaved') || 'Unsaved Changes'}</span>}
+        {hasUnsavedChanges && (
+          <span style={{ fontWeight: 700, color: '#1a2e00', fontSize: '0.9rem' }}>
+            {t('pred_unsaved') || 'Unsaved Changes'}
+          </span>
+        )}
         <button 
           className="btn btn-gold" 
           onClick={handleSubmit} 
@@ -301,7 +335,7 @@ export default function PredictionsPage() {
             boxShadow: Object.keys(predictions).length > 0 ? '0 4px 16px rgba(169,223,0,0.5)' : undefined
           }}
         >
-          {submitting ? 'Submitting...' : (t('pred_submit') || 'Submit Predictions')}
+          {submitting ? 'Saving…' : (t('pred_submit') || 'Save Predictions')}
         </button>
       </div>
 
