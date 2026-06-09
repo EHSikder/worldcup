@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
-import Image from 'next/image';
 
 function getInitials(name) {
   if (!name) return '?';
@@ -25,6 +24,8 @@ export default function LeaderboardPage() {
   const [search, setSearch] = useState('');
   const { t, locale } = useLanguage();
   const { user } = useAuth();
+
+  const isArabic = locale === 'ar';
 
   const fetchLeaderboard = () => {
     api.get('/api/leaderboard?limit=200').then(res => {
@@ -51,7 +52,6 @@ export default function LeaderboardPage() {
   const rank2 = topThree.find(u => u.rank === 2);
   const rank3 = topThree.find(u => u.rank === 3);
 
-  // Podium colors
   const podiumStyles = {
     1: { bg: 'linear-gradient(180deg, #FFF8E1 0%, #FFD54F 100%)', border: '#FFD54F', color: '#D4A843', numBg: '#FFD54F', numColor: '#7A5A00' },
     2: { bg: 'linear-gradient(180deg, #FAFAFA 0%, #E0E0E0 100%)', border: '#E0E0E0', color: '#757575', numBg: '#E0E0E0', numColor: '#424242' },
@@ -70,7 +70,6 @@ export default function LeaderboardPage() {
         marginTop: isCenter ? 0 : 24,
         position: 'relative'
       }}>
-        {/* Trophy icon for #1 */}
         {rank === 1 && (
           <div style={{ marginBottom: 4 }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -78,8 +77,7 @@ export default function LeaderboardPage() {
             </svg>
           </div>
         )}
-        
-        {/* Initials circle */}
+
         <div style={{
           width: isCenter ? 56 : 48,
           height: isCenter ? 56 : 48,
@@ -98,17 +96,14 @@ export default function LeaderboardPage() {
           {getInitials(userData.full_name)}
         </div>
 
-        {/* Name */}
         <div style={{ fontWeight: 700, fontSize: isCenter ? '1rem' : '0.9rem', color: '#111827', textAlign: 'center', marginBottom: 2 }}>
           {getShortName(userData.full_name)}
         </div>
 
-        {/* Points */}
         <div style={{ fontWeight: 800, fontSize: isCenter ? '1.1rem' : '0.95rem', color: style.color, marginBottom: 8 }}>
           {userData.total_points} pts
         </div>
 
-        {/* Podium block */}
         <div style={{
           background: style.bg,
           borderRadius: '16px 16px 0 0',
@@ -138,40 +133,38 @@ export default function LeaderboardPage() {
   return (
     <>
       <div className="container" style={{ padding: 'var(--space-6) var(--space-4)', minHeight: '80vh', maxWidth: 600, paddingBottom: currentUser ? 100 : 40 }}>
-        {/* Grand Prize Banner Image */}
-<div className="leaderboard-banner-wrap">
-  <div className="leaderboard-banner leaderboard-banner-desktop">
-    <Image
-      src={
-        isArabic
-          ? '/images/leaderboard/leaderboard-banner-desktop-ar.webp'
-          : '/images/leaderboard/leaderboard-banner-desktop-en.webp'
-      }
-      alt="Leaderboard banner"
-      fill
-      priority
-      sizes="(max-width: 768px) 0px, 100vw"
-      style={{ objectFit: 'cover' }}
-    />
-  </div>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ width: '100%', overflow: 'hidden', borderRadius: 20, lineHeight: 0 }}>
+            <picture>
+              <source
+                media="(max-width: 768px)"
+                srcSet={
+                  isArabic
+                    ? '/images/leaderboard/leaderboard-banner-mobile-ar.webp'
+                    : '/images/leaderboard/leaderboard-banner-mobile-en.webp'
+                }
+              />
+              <source
+                media="(min-width: 769px)"
+                srcSet={
+                  isArabic
+                    ? '/images/leaderboard/leaderboard-banner-desktop-ar.webp'
+                    : '/images/leaderboard/leaderboard-banner-desktop-en.webp'
+                }
+              />
+              <img
+                src={
+                  isArabic
+                    ? '/images/leaderboard/leaderboard-banner-desktop-ar.webp'
+                    : '/images/leaderboard/leaderboard-banner-desktop-en.webp'
+                }
+                alt="Leaderboard banner"
+                style={{ display: 'block', width: '100%', height: 'auto' }}
+              />
+            </picture>
+          </div>
+        </div>
 
-  <div className="leaderboard-banner leaderboard-banner-mobile">
-    <Image
-      src={
-        isArabic
-          ? '/images/leaderboard/leaderboard-banner-mobile-ar.webp'
-          : '/images/leaderboard/leaderboard-banner-mobile-en.webp'
-      }
-      alt="Leaderboard banner"
-      fill
-      priority
-      sizes="(max-width: 768px) 100vw, 0px"
-      style={{ objectFit: 'cover' }}
-    />
-  </div>
-</div>
-
-        {/* Group Champion Banner */}
         <div style={{
           background: '#FFFFFF',
           borderRadius: 16,
@@ -198,12 +191,11 @@ export default function LeaderboardPage() {
           </div>
         </div>
 
-        {/* Search */}
         <div style={{ marginBottom: 20 }}>
-          <input 
-            className="form-input" 
-            placeholder={t('lb_search') || 'Search players...'} 
-            value={search} 
+          <input
+            className="form-input"
+            placeholder={t('lb_search') || 'Search players...'}
+            value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ borderRadius: 16, padding: '12px 18px', border: '1px solid #E5E7EB', fontSize: '0.95rem' }}
           />
@@ -219,7 +211,6 @@ export default function LeaderboardPage() {
           </div>
         ) : (
           <div>
-            {/* Podium Top 3 */}
             {!search && topThree.length > 0 && (
               <div style={{
                 display: 'flex',
@@ -235,7 +226,6 @@ export default function LeaderboardPage() {
               </div>
             )}
 
-            {/* Rest of leaderboard */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(search ? sortedLeaders : restList).map((entry) => {
                 const isCurrentUser = user && entry.id === user.id;
@@ -250,7 +240,6 @@ export default function LeaderboardPage() {
                     border: isCurrentUser ? '2px solid #EF4444' : '1px solid #F3F4F6',
                     transition: 'all 0.2s ease'
                   }}>
-                    {/* Rank */}
                     <div style={{
                       width: 32,
                       fontWeight: 900,
@@ -260,7 +249,6 @@ export default function LeaderboardPage() {
                       {entry.rank}
                     </div>
 
-                    {/* Initials Badge */}
                     <div style={{
                       width: 36, height: 36, borderRadius: '50%',
                       background: isCurrentUser ? '#FEE2E2' : '#F3F4F6',
@@ -271,13 +259,11 @@ export default function LeaderboardPage() {
                       {getInitials(entry.full_name)}
                     </div>
 
-                    {/* Name */}
                     <div style={{ flex: 1, fontWeight: 600, fontSize: '0.95rem', color: '#111827' }}>
                       {entry.full_name}
                       {isCurrentUser && <span style={{ color: '#EF4444', fontWeight: 500, fontSize: '0.85rem' }}> (You)</span>}
                     </div>
 
-                    {/* Points */}
                     <div style={{
                       fontWeight: 900,
                       fontSize: '1.1rem',
@@ -293,7 +279,6 @@ export default function LeaderboardPage() {
         )}
       </div>
 
-      {/* Sticky Current User Bar at Bottom */}
       {currentUser && !search && (
         <div style={{
           position: 'fixed',
@@ -311,12 +296,10 @@ export default function LeaderboardPage() {
           margin: '0 auto',
           borderRadius: '20px 20px 0 0'
         }}>
-          {/* Rank */}
           <div style={{ fontWeight: 900, fontSize: '1.3rem', color: 'white', minWidth: 30 }}>
             {currentUser.rank}
           </div>
 
-          {/* Initials */}
           <div style={{
             width: 36, height: 36, borderRadius: '50%',
             background: 'rgba(255,255,255,0.2)',
@@ -327,7 +310,6 @@ export default function LeaderboardPage() {
             {getInitials(currentUser.full_name)}
           </div>
 
-          {/* Name */}
           <div style={{ flex: 1 }}>
             <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'white' }}>
               {getShortName(currentUser.full_name)}
@@ -335,7 +317,6 @@ export default function LeaderboardPage() {
             <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontWeight: 500 }}> (You)</span>
           </div>
 
-          {/* Points */}
           <div style={{ textAlign: 'right' }}>
             <span style={{ fontWeight: 900, fontSize: '1.3rem', color: 'white' }}>{currentUser.total_points}</span>
             <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600, marginLeft: 4 }}>pts</span>
