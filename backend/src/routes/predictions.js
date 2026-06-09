@@ -1,12 +1,12 @@
+// backend/src/routes/predictions.js
 const express = require('express');
 const router = express.Router();
 const supabase = require('../config/database');
 const auth = require('../middleware/auth');
-const { submitPredictionRules, validate } = require('../utils/validators');
 
 /**
  * GET /api/predictions
- * Returns all predictions for the authenticated user
+ * Returns all predictions for the authenticated user.
  */
 router.get('/', auth, async (req, res, next) => {
   try {
@@ -22,15 +22,14 @@ router.get('/', auth, async (req, res, next) => {
         locked_reason,
         points_earned,
         created_at,
-        updated_at,
-        predicted_winner:predicted_winner_team_id (id, name, short_code, flag_url)
+        updated_at
       `)
       .eq('user_id', req.user.id)
       .order('match_number', { ascending: true });
 
     if (error) throw error;
 
-    // Also fetch champion prediction
+    // Champion prediction
     const { data: champPred } = await supabase
       .from('champion_predictions')
       .select(`
@@ -55,214 +54,119 @@ router.get('/', auth, async (req, res, next) => {
 });
 
 /**
- * POST /api/predictions
- * Submit bracket predictions (create new)
+ * PUT /api/predictions
+ * Upsert predictions for the authenticated user.
+ * Handles both new predictions and edits in one call.
+ * Individual prediction rows are locked by the cron job 5 minutes before kickoff.
  */
-router.post('/', auth, submitPredictionRules, validate, async (req, res, next) => {
+router.put('/', auth, async (req, res, next) => {
   try {
     const { predictions, champion_prediction_team_id } = req.body;
+
+    if (!Array.isArray(predictions) || predictions.length === 0) {
+      return res.status(400).json({ success: false, message: 'No predictions provided.' });
+    }
+
     const userId = req.user.id;
+    const matchNumbers = predictions.map(p => parseInt(p.match_number));
 
-    // Validate all match numbers exist and are knockout matches
-    const matchNumbers = predictions.map((p) => p.match_number);
-
-    // Check bracket locks for all relevant rounds
-    const { data: matches, error: matchError } = await supabase
+    // Fetch all matches in one query
+    const { data: matches, error: matchErr } = await supabase
       .from('matches')
-      .select('match_number, round')
+      .select('match_number, kickoff_time, status')
       .in('match_number', matchNumbers);
 
-    if (matchError) throw matchError;
+    if (matchErr) throw matchErr;
 
-    // Check which rounds are locked
-    const rounds = [...new Set(matches.map((m) => m.round))];
-    const { data: locks } = await supabase
-      .from('bracket_locks')
-      .select('round, is_locked')
-      .in('round', rounds);
+    const matchMap = {};
+    for (const m of (matches || [])) matchMap[m.match_number] = m;
 
-    const lockedRounds = new Set(
-      (locks || []).filter((l) => l.is_locked).map((l) => l.round)
-    );
+    // Fetch existing predictions for this user in one query
+    const { data: existing, error: existErr } = await supabase
+      .from('predictions')
+      .select('id, match_number, is_locked')
+      .eq('user_id', userId)
+      .in('match_number', matchNumbers);
 
-    // Filter out predictions for locked rounds
-    const lockedPredictions = [];
-    const validPredictions = [];
+    if (existErr) throw existErr;
+
+    const existingMap = {};
+    for (const e of (existing || [])) existingMap[e.match_number] = e;
+
+    const now = new Date();
+    const toInsert = [];
+    const toUpdate = [];
+    const skippedLocked = [];
+    const skippedNotFound = [];
 
     for (const pred of predictions) {
-      const match = matches.find((m) => m.match_number === pred.match_number);
+      const matchNum = parseInt(pred.match_number);
+      const match = matchMap[matchNum];
+
       if (!match) {
-        return res.status(400).json({
-          success: false,
-          message: `Match #${pred.match_number} not found.`,
-        });
+        skippedNotFound.push(matchNum);
+        continue;
       }
-      if (lockedRounds.has(match.round)) {
-        lockedPredictions.push(pred.match_number);
+
+      // Time-based lock: refuse if kickoff is in ≤5 minutes OR match not scheduled
+      const kickoff = match.kickoff_time ? new Date(match.kickoff_time) : null;
+      const minutesUntil = kickoff ? (kickoff - now) / 60000 : Infinity;
+      const timeLocked = match.status !== 'scheduled' || minutesUntil <= 5;
+
+      const existingPred = existingMap[matchNum];
+
+      // If prediction row already exists and is individually locked, skip
+      if (existingPred?.is_locked || timeLocked) {
+        skippedLocked.push(matchNum);
+        continue;
+      }
+
+      const row = {
+        match_number: matchNum,
+        predicted_winner_team_id: pred.predicted_winner_team_id || null,
+        predicted_home_score: pred.predicted_home_score != null ? parseInt(pred.predicted_home_score) : 0,
+        predicted_away_score: pred.predicted_away_score != null ? parseInt(pred.predicted_away_score) : 0,
+      };
+
+      if (existingPred) {
+        toUpdate.push({ id: existingPred.id, ...row });
       } else {
-        validPredictions.push({
-          user_id: userId,
-          match_number: pred.match_number,
-          predicted_winner_team_id: pred.predicted_winner_team_id,
-          predicted_home_score: pred.predicted_home_score,
-          predicted_away_score: pred.predicted_away_score,
-        });
+        toInsert.push({ user_id: userId, ...row });
       }
     }
 
-    if (lockedPredictions.length > 0 && validPredictions.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'All predicted rounds are locked.',
-        locked_matches: lockedPredictions,
-      });
-    }
-
-    // Insert valid predictions
-    if (validPredictions.length > 0) {
-      const { error: insertError } = await supabase
+    // Batch insert new predictions
+    if (toInsert.length > 0) {
+      const { error: insertErr } = await supabase
         .from('predictions')
-        .insert(validPredictions);
-
-      if (insertError) {
-        if (insertError.code === '23505') {
-          return res.status(409).json({
-            success: false,
-            message: 'Some predictions already exist. Use PUT to edit.',
-          });
-        }
-        throw insertError;
-      }
+        .insert(toInsert);
+      if (insertErr) throw insertErr;
     }
 
-    // Handle champion prediction
+    // Update existing predictions one by one (Supabase doesn't support batch update by different IDs)
+    for (const upd of toUpdate) {
+      const { id, ...fields } = upd;
+      const { error: updErr } = await supabase
+        .from('predictions')
+        .update(fields)
+        .eq('id', id);
+      if (updErr) throw updErr;
+    }
+
+    // Handle champion prediction (upsert — one per user)
     if (champion_prediction_team_id) {
-      const { error: champError } = await supabase
+      const { error: champErr } = await supabase
         .from('champion_predictions')
         .upsert(
-          {
-            user_id: userId,
-            predicted_champion_team_id: champion_prediction_team_id,
-          },
+          { user_id: userId, predicted_champion_team_id: champion_prediction_team_id },
           { onConflict: 'user_id' }
         );
-
-      if (champError) throw champError;
+      if (champErr) throw champErr;
     }
 
-    // Mark user as having submitted
-    await supabase
-      .from('users')
-      .update({ has_submitted_prediction: true })
-      .eq('id', userId);
-
-    res.status(201).json({
-      success: true,
-      message: 'Predictions submitted successfully.',
-      data: {
-        submitted: validPredictions.length,
-        locked_skipped: lockedPredictions,
-      },
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-/**
- * PUT /api/predictions
- * Edit existing predictions
- */
-router.put('/', auth, submitPredictionRules, validate, async (req, res, next) => {
-  try {
-    const { predictions, champion_prediction_team_id } = req.body;
-    const userId = req.user.id;
-
-    const updated = [];
-    const locked = [];
-    const created = [];
-
-    for (const pred of predictions) {
-      // Check if the round is locked
-      const { data: match } = await supabase
-        .from('matches')
-        .select('round')
-        .eq('match_number', pred.match_number)
-        .single();
-
-      if (match) {
-        const { data: bracketLock } = await supabase
-          .from('bracket_locks')
-          .select('is_locked')
-          .eq('round', match.round)
-          .single();
-
-        if (bracketLock?.is_locked) {
-          locked.push(pred.match_number);
-          continue;
-        }
-      }
-
-      // Check if prediction already exists
-      const { data: existing } = await supabase
-        .from('predictions')
-        .select('id, is_locked')
-        .eq('user_id', userId)
-        .eq('match_number', pred.match_number)
-        .single();
-
-      if (existing) {
-        if (existing.is_locked) {
-          locked.push(pred.match_number);
-          continue;
-        }
-
-        // Update existing prediction
-        const { error: updateError } = await supabase
-          .from('predictions')
-          .update({
-            predicted_winner_team_id: pred.predicted_winner_team_id,
-            predicted_home_score: pred.predicted_home_score,
-            predicted_away_score: pred.predicted_away_score,
-          })
-          .eq('id', existing.id);
-
-        if (updateError) throw updateError;
-        updated.push(pred.match_number);
-      } else {
-        // Create new prediction
-        const { error: insertError } = await supabase
-          .from('predictions')
-          .insert({
-            user_id: userId,
-            match_number: pred.match_number,
-            predicted_winner_team_id: pred.predicted_winner_team_id,
-            predicted_home_score: pred.predicted_home_score,
-            predicted_away_score: pred.predicted_away_score,
-          });
-
-        if (insertError) throw insertError;
-        created.push(pred.match_number);
-      }
-    }
-
-    // Handle champion prediction update
-    if (champion_prediction_team_id) {
-      const { error: champError } = await supabase
-        .from('champion_predictions')
-        .upsert(
-          {
-            user_id: userId,
-            predicted_champion_team_id: champion_prediction_team_id,
-          },
-          { onConflict: 'user_id' }
-        );
-
-      if (champError) throw champError;
-    }
-
-    // Mark user as having submitted if they haven't
-    if (!req.user.has_submitted_prediction && (updated.length > 0 || created.length > 0)) {
+    // Mark user as having submitted predictions
+    const totalSaved = toInsert.length + toUpdate.length;
+    if (totalSaved > 0) {
       await supabase
         .from('users')
         .update({ has_submitted_prediction: true })
@@ -271,16 +175,26 @@ router.put('/', auth, submitPredictionRules, validate, async (req, res, next) =>
 
     res.json({
       success: true,
-      message: 'Predictions updated.',
+      message: `${totalSaved} predictions saved.`,
       data: {
-        updated,
-        created,
-        locked,
+        inserted: toInsert.length,
+        updated: toUpdate.length,
+        skipped_locked: skippedLocked,
+        skipped_not_found: skippedNotFound,
       },
     });
   } catch (err) {
     next(err);
   }
+});
+
+/**
+ * POST /api/predictions — kept for backwards compatibility, delegates to PUT logic
+ */
+router.post('/', auth, async (req, res, next) => {
+  // Forward to the PUT handler
+  req.method = 'PUT';
+  router.handle(req, res, next);
 });
 
 module.exports = router;
