@@ -13,10 +13,26 @@ export const metadata = {
   title: 'R BUILD Predictor — Win With Our Program',
   description: 'Predict match scores and compete for glory in the R BUILD knockout prediction challenge.',
   keywords: 'R BUILD, bracket prediction, competition, prediction game',
+
   openGraph: {
     title: 'R BUILD Predictor — Win With Our Program',
     description: 'Predict the champion and compete in the ultimate R BUILD prediction challenge.',
     type: 'website',
+    images: [
+      {
+        url: '/images/share-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'R BUILD Predictor',
+      },
+    ],
+  },
+
+  twitter: {
+    card: 'summary_large_image',
+    title: 'R BUILD Predictor — Win With Our Program',
+    description: 'Predict the champion and compete in the ultimate R BUILD prediction challenge.',
+    images: ['/images/share-image.jpg'],
   },
 };
 
