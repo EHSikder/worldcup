@@ -1165,6 +1165,39 @@ h4 { font-size: var(--fs-xl); }
   color: var(--color-gold);
 }
 
+.leaderboard-banner-wrap {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.leaderboard-banner {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #f3f4f6;
+}
+
+.leaderboard-banner-desktop {
+  display: block;
+  aspect-ratio: 2400 / 528;
+}
+
+.leaderboard-banner-mobile {
+  display: none;
+  aspect-ratio: 1280 / 528;
+}
+
+@media (max-width: 768px) {
+  .leaderboard-banner-desktop {
+    display: none;
+  }
+
+  .leaderboard-banner-mobile {
+    display: block;
+  }
+}
+
 /* ── OTP Input ────────────────────────────────────────────── */
 .otp-container {
   display: flex;
