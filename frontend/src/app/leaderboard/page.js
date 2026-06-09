@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
 
 function getInitials(name) {
   if (!name) return '?';
@@ -137,24 +138,38 @@ export default function LeaderboardPage() {
   return (
     <>
       <div className="container" style={{ padding: 'var(--space-6) var(--space-4)', minHeight: '80vh', maxWidth: 600, paddingBottom: currentUser ? 100 : 40 }}>
-        {/* Grand Prize Banner */}
-        <div style={{
-          background: 'linear-gradient(135deg, #5F27E4 0%, #3d1a9e 100%)',
-          borderRadius: 20,
-          padding: '20px 24px',
-          marginBottom: 20,
-          textAlign: 'center',
-          boxShadow: '0 8px 32px rgba(95, 39, 228, 0.4)',
-          position: 'relative',
-          overflow: 'hidden',
-          border: '2px solid #A9DF00'
-        }}>
-          <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: 'rgba(169,223,0,0.15)', pointerEvents: 'none' }} />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A9DF00', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>{t('lb_grand_prize_label')}</div>
-            <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em' }}>$1,000</div>
-          </div>
-        </div>
+        {/* Grand Prize Banner Image */}
+<div className="leaderboard-banner-wrap">
+  <div className="leaderboard-banner leaderboard-banner-desktop">
+    <Image
+      src={
+        isArabic
+          ? '/images/leaderboard/leaderboard-banner-desktop-ar.webp'
+          : '/images/leaderboard/leaderboard-banner-desktop-en.webp'
+      }
+      alt="Leaderboard banner"
+      fill
+      priority
+      sizes="(max-width: 768px) 0px, 100vw"
+      style={{ objectFit: 'cover' }}
+    />
+  </div>
+
+  <div className="leaderboard-banner leaderboard-banner-mobile">
+    <Image
+      src={
+        isArabic
+          ? '/images/leaderboard/leaderboard-banner-mobile-ar.webp'
+          : '/images/leaderboard/leaderboard-banner-mobile-en.webp'
+      }
+      alt="Leaderboard banner"
+      fill
+      priority
+      sizes="(max-width: 768px) 100vw, 0px"
+      style={{ objectFit: 'cover' }}
+    />
+  </div>
+</div>
 
         {/* Group Champion Banner */}
         <div style={{
