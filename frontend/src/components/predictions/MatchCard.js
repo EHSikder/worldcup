@@ -185,9 +185,9 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
       {/* Winner selector — hidden when locked or TBC */}
       {!isLocked && match.home_team && match.away_team && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: prediction?.winner ? 24 : 0 }}>
-          {[
+         {[
             { key: 'home', label: homeTeamName },
-            { key: 'draw', label: t('pred_draw') || 'Draw' },
+            ...(!isKnockout ? [{ key: 'draw', label: t('pred_draw') || 'Draw' }] : []),
             { key: 'away', label: awayTeamName },
           ].map(({ key, label }) => (
             <button
