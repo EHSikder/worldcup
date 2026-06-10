@@ -89,6 +89,56 @@ export default function PredictionsPage() {
         
         setPredictions(predsObj);
         setSavedPredictions(predsObj);
+        setSavedPredictions(predsObj);
+
+        // ── Realtime: match score/status updates ──────────────
+        const channel = supabase
+          .channel('wc2026-realtime')
+          // Match status/score changes (live score, finished)
+          .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'matches',
+          }, (payload) => {
+            setMatches(prev => prev.map(m =>
+              m.match_number === payload.new.match_number
+                ? {
+                    ...m,
+                    status:         payload.new.status,
+                    home_score:     payload.new.home_score,
+                    away_score:     payload.new.away_score,
+                    winner_team_id: payload.new.winner_team_id,
+                    home_penalty_score: payload.new.home_penalty_score,
+                    away_penalty_score: payload.new.away_penalty_score,
+                  }
+                : m
+            ));
+          })
+          // Prediction lock + points updates (fires after DB trigger scores a match)
+          .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'predictions',
+            filter: `user_id=eq.${user?.id}`,
+          }, (payload) => {
+            const pred = payload.new;
+            setSavedPredictions(prev => {
+              const existing = prev[pred.match_number] || {};
+              return {
+                ...prev,
+                [pred.match_number]: {
+                  ...existing,
+                  isLocked:     pred.is_locked,
+                  lockedReason: pred.locked_reason,
+                  pointsEarned: pred.points_earned,
+                },
+              };
+            });
+          })
+          .subscribe();
+
+        // Store channel ref for cleanup
+        window._wc2026Channel = channel;
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err.message || 'Failed to load data');
