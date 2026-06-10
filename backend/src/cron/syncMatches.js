@@ -240,7 +240,7 @@ async function processMatchUpdate(dbMatch, parsed, teamApiMap, errors, incMatche
     incLocked(count || 0);
 
     // Score the match
-    if (winnerTeamId && parsed.homeScore !== null && parsed.awayScore !== null) {
+    if (parsed.homeScore !== null && parsed.awayScore !== null) {
       const result = await scoreMatch(
         dbMatch.match_number,
         winnerTeamId,
