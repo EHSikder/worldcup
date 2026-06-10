@@ -70,7 +70,9 @@ async function scoreMatch(matchNumber, winnerTeamId, homeScore, awayScore) {
     let points = 0;
 
     // Check correct winner
-    if (pred.predicted_winner_team_id === winnerTeamId) {
+    const drawMatch  = pred.predicted_winner_team_id === null && (winnerTeamId === null || winnerTeamId === undefined);
+const teamMatch  = pred.predicted_winner_team_id !== null && pred.predicted_winner_team_id === winnerTeamId;
+if (drawMatch || teamMatch) {
       points += roundRules.correctWinnerPoints;
     }
 
