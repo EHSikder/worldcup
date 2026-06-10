@@ -240,5 +240,44 @@ router.get('/status', adminAuth, async (req, res, next) => {
   }
 });
 
+// POST /api/notifications/broadcast — send to all subscribers (admin only)
+router.post('/broadcast', adminAuth, async (req, res, next) => {
+  try {
+    const { title = '⚽ WC2026', body = '', url = '/predictions' } = req.body;
+    const result = await broadcastToAll({ title, body, url });
+    res.json({ success: true, ...result });
+  } catch (err) { next(err); }
+});
+
+async function broadcastToAll({ title, body, url }) {
+  const { data: subs } = await supabase
+    .from('push_subscriptions')
+    .select('endpoint, p256dh, auth_key');
+
+  if (!subs?.length) return { sent: 0 };
+
+  const payload = JSON.stringify({ title, body, url });
+  const stale = [];
+  let sent = 0;
+
+  for (const sub of subs) {
+    try {
+      await webpush.sendNotification(
+        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth_key } },
+        payload
+      );
+      sent++;
+    } catch (err) {
+      if (err.statusCode === 410 || err.statusCode === 404) stale.push(sub.endpoint);
+    }
+  }
+
+  if (stale.length) {
+    await supabase.from('push_subscriptions').delete().in('endpoint', stale);
+  }
+
+  return { sent, stale_removed: stale.length, total: subs.length };
+}
+
 module.exports = router;
 module.exports.sendDailyReminders = sendDailyReminders;
