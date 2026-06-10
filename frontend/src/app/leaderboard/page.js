@@ -39,9 +39,10 @@ export default function LeaderboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const filtered = leaders.filter(u =>
-    u.full_name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = leaders.filter(u => {
+    const name = (u.display_name || u.full_name) || '';
+    return name.toLowerCase().includes(search.toLowerCase());
+  });
 
   const sortedLeaders = [...filtered].sort((a, b) => a.rank - b.rank);
   const topThree = sortedLeaders.filter(u => u.rank <= 3);
@@ -93,11 +94,11 @@ export default function LeaderboardPage() {
           boxShadow: '0 3px 10px rgba(0,0,0,0.1)',
           marginBottom: 8
         }}>
-          {getInitials(userData.full_name)}
+          {getInitials(userData.display_name || userData.full_name)}
         </div>
 
         <div style={{ fontWeight: 700, fontSize: isCenter ? '1rem' : '0.9rem', color: '#111827', textAlign: 'center', marginBottom: 2 }}>
-          {getShortName(userData.full_name)}
+          {getShortName(userData.display_name || userData.full_name)}
         </div>
 
         <div style={{ fontWeight: 800, fontSize: isCenter ? '1.1rem' : '0.95rem', color: style.color, marginBottom: 8 }}>
@@ -273,11 +274,11 @@ export default function LeaderboardPage() {
                       fontWeight: 800, fontSize: '0.8rem',
                       color: isCurrentUser ? '#EF4444' : '#4B5563'
                     }}>
-                      {getInitials(entry.full_name)}
+                      {getInitials(entry.display_name || entry.full_name)}
                     </div>
 
                     <div style={{ flex: 1, fontWeight: 600, fontSize: '0.95rem', color: '#111827' }}>
-                      {entry.full_name}
+                      {entry.display_name || entry.full_name}
                       {isCurrentUser && <span style={{ color: '#EF4444', fontWeight: 500, fontSize: '0.85rem' }}> (You)</span>}
                     </div>
 
@@ -324,12 +325,12 @@ export default function LeaderboardPage() {
             fontWeight: 800, fontSize: '0.8rem',
             color: 'white'
           }}>
-            {getInitials(currentUser.full_name)}
+            {getInitials(currentUser.display_name || currentUser.full_name)}
           </div>
 
           <div style={{ flex: 1 }}>
             <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'white' }}>
-              {getShortName(currentUser.full_name)}
+              {getShortName(currentUser.display_name || currentUser.full_name)}
             </span>
             <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontWeight: 500 }}> (You)</span>
           </div>
