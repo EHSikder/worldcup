@@ -7,6 +7,7 @@ import MatchCard from '@/components/predictions/MatchCard';
 import Footer from '@/components/layout/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import api from '@/lib/api';
+import { supabase } from '@/lib/supabaseClient';
 import { NotificationBanner } from '@/components/NotificationPrompt';
 
 export default function PredictionsPage() {
