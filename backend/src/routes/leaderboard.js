@@ -12,7 +12,7 @@ router.get('/', async (req, res, next) => {
 
     const { data: users, error } = await supabase
       .from('users')
-      .select('id, full_name, total_points, has_submitted_prediction, favorite_team_id')
+      .select('id, full_name, display_name, total_points, has_submitted_prediction, favorite_team_id')
       .eq('has_submitted_prediction', true)
       .order('total_points', { ascending: false })
       .limit(limit);
@@ -46,7 +46,7 @@ router.get('/user/:userId', async (req, res, next) => {
     // Get user
     const { data: userRank, error } = await supabase
       .from('users')
-      .select('id, full_name, total_points, has_submitted_prediction')
+      .select('id, full_name, display_name, total_points, has_submitted_prediction')
       .eq('id', userId)
       .single();
 
