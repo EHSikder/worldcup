@@ -89,7 +89,6 @@ export default function PredictionsPage() {
         
         setPredictions(predsObj);
         setSavedPredictions(predsObj);
-        setSavedPredictions(predsObj);
 
         // ── Realtime: match score/status updates ──────────────
         const channel = supabase
@@ -140,6 +139,12 @@ export default function PredictionsPage() {
         // Store channel ref for cleanup
         window._wc2026Channel = channel;
       } catch (err) {
+        // Cleanup realtime on unmount
+      return () => {
+        if (window._wc2026Channel) {
+          supabase.removeChannel(window._wc2026Channel);
+        }
+      };
         console.error('Error fetching data:', err);
         setError(err.message || 'Failed to load data');
       } finally {
