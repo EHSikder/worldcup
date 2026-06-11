@@ -119,11 +119,19 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
       {showLiveScore && (
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <span style={{
-            background: match.status === 'live' ? 'var(--color-primary-red)' : '#F3F4F6',
+            background: match.status === 'live' ? '#DC2626' : '#F3F4F6',
             color: match.status === 'live' ? '#fff' : 'var(--color-text-secondary)',
-            padding: '2px 10px', borderRadius: 12,
+            padding: '3px 10px 3px 8px', borderRadius: 12,
             fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase',
+            display: 'inline-flex', alignItems: 'center', gap: 5,
           }}>
+            {match.status === 'live' && (
+              <span style={{
+                width: 6, height: 6, borderRadius: '50%', background: '#fff',
+                display: 'inline-block',
+                animation: 'livePulse 1.2s ease-in-out infinite',
+              }} />
+            )}
             {statusLabels[match.status] || match.status}
           </span>
           <div style={{ fontSize: '1.8rem', fontWeight: 900, marginTop: 6, letterSpacing: 4, color: '#111827' }}>
