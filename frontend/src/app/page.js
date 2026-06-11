@@ -63,9 +63,9 @@ export default function HomePage() {
 
         {/* Right Side — Always visible */}
         <div className="hero-new-right" style={{ direction: locale === 'ar' ? 'rtl' : 'ltr' }}>
-  <div className="hero-right-content">
+          <div className="hero-right-content">
             <h2 className="hero-subtitle">{locale === 'ar' ? t('hero_right_subtitle') : 'R-BUILD WORLD CUP CHALLENGE'}</h2>
-            <h1 className="hero-title">{locale === 'ar' ? t('hero_right_title') : 'WIN $1000'}</h1>
+            <h1 className="hero-title">{locale === 'ar' ? 'قيادة مجلس الإدارة' : 'LEAD THE BOARD'}</h1>
             <p className="hero-desc">
               {locale === 'ar' ? t('hero_desc_1') : 'Predict match results and scores, earn points, climb the leaderboard, and become the R-Build Champion.'}
             </p>
