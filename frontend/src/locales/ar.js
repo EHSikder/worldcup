@@ -11,15 +11,14 @@ export const ar = {
   hero_badge: "تحدي توقعات R BUILD",
   hero_title: "توقع بطل البطولة",
   hero_desc_1: "سجّل توقعاتك، اجمع النقاط، نافس زملاءك، وتصدّر لوحة الترتيب لتصبح بطل R-Build.",
-  hero_desc_2: "الجائزة الكبرى: 1000 دولار للفائز بالمركز الأول!",
+  hero_desc_2: "تنافس مع زملائك واصعد إلى قمة لوحة الترتيب!",
   hero_cta_primary: "سجّل توقعاتك",
   hero_cta_secondary: "لوحة الترتيب",
   hero_left_line1: "توقّع.",
   hero_left_line2: "تنافس.",
   hero_left_line3: "اربح.",
   hero_right_subtitle: "تحدي R-Build لكأس العالم",
-  hero_right_title: "1000 دولار",
-
+  hero_right_title: "بطل التوقعات",
 
   // Homepage - Steps
   steps_title: "كيف تعمل المسابقة؟",
@@ -27,9 +26,9 @@ export const ar = {
   step_1_title: "تسجيل الدخول",
   step_1_desc: "سجّل الدخول وأكمل بياناتك للبدء في المنافسة.",
   step_2_title: "سجّل توقعاتك",
-  step_2_desc: "توقع نتائج المباريات والنتائج النهائية. يمكنك تعديل توقعاتك حتى 5 دقائق قبل بداية المباراة..",
-  step_3_title: "اربح 1000 دولار",
-  step_3_desc: ".R-Build اجمع النقاط طوال البطولة، تصدّر لوحة الترتيب، وكن بطل",
+  step_2_desc: "توقع نتائج المباريات والنتائج النهائية. يمكنك تعديل توقعاتك حتى 5 دقائق قبل بداية المباراة.",
+  step_3_title: "تصدّر الترتيب",
+  step_3_desc: "اجمع النقاط طوال البطولة، تصدّر لوحة الترتيب، وكن بطل R-Build.",
 
   // Homepage - Scoring
   scoring_title: "نظام النقاط",
@@ -40,7 +39,7 @@ export const ar = {
   scoring_exact_bonus_title: "⚡ مكافأة النتيجة الدقيقة",
   scoring_exact_bonus_desc: "اكسب نقاطاً إضافية في أي جولة إذا توقعت النتيجة الدقيقة تماماً!",
 
-  // Scoring rounds (used in scoring cards)
+  // Scoring rounds
   scoring_round_group: "دور المجموعات",
   scoring_round_r32: "دور الـ32",
   scoring_round_r16: "دور الـ16",
@@ -51,12 +50,12 @@ export const ar = {
 
   // Homepage - Teams
   teams_title: "المنتخبات الـ48",
-  teams_subtitle: "🏆.مجموعة، 48 منتخبًا، وبطل واحد فقط", 
+  teams_subtitle: "🏆 مجموعة، 48 منتخبًا، وبطل واحد فقط.",
   group: "مجموعة",
 
   // Homepage - Bottom CTA
-  cta_title: "هل تريد التوقع وربح 1000 دولار؟",
-  cta_subtitle: "انضم إلى التحدي، وتفوق على المنافسين، وسيحصل أفضل متوقع على الجائزة الكبرى البالغة 1000 دولار!",
+  cta_title: "هل أنت مستعد للتحدي؟",
+  cta_subtitle: "انضم إلى التحدي، وتفوق على المنافسين، واثبت أنك الأفضل في توقع نتائج البطولة!",
   cta_btn: "ابدأ التوقع الآن",
 
   // Footer
@@ -79,15 +78,15 @@ export const ar = {
   lb_subtitle: "أفضل المتوقعين مصنفين حسب إجمالي النقاط المكتسبة",
   lb_search: "البحث عن لاعبين...",
   lb_empty: "لم يتم تقديم أي توقعات بعد. كن أول من يملأ توقعاتك.",
-  lb_prize: "جائزة 1000$",
+  lb_prize: "المركز الأول",
   lb_points: "نقاط",
   lb_col_rank: "المركز",
   lb_col_user: "اسم المستخدم",
   lb_col_team: "الفريق",
-  lb_grand_prize_label: "الجائزة الكبرى",
-  lb_grand_prize_tagline: "توقع واربح",
-  lb_grand_champion_title: "الجائزة الكبرى:",
-  lb_grand_champion_subtitle: "المتوقع الأول يفوز بالكل",
+  lb_grand_prize_label: "بطل التوقعات",
+  lb_grand_prize_tagline: "توقع وتنافس",
+  lb_grand_champion_title: "بطل التوقعات",
+  lb_grand_champion_subtitle: "المتوقع الأعلى نقاطاً",
 
   // Predictions
   pred_title: "توقعات المباريات",
@@ -98,11 +97,11 @@ export const ar = {
   pred_match: "مباراة",
   pred_exact_score: "توقع النتيجة الدقيقة (مكافأة +10 نقاط)",
   pred_draw: "تعادل",
-  pred_prize_label: "بركة الجائزة الكبرى",
-  pred_prize_tagline: "توقع واربح",
+  pred_prize_label: "بطل التوقعات",
+  pred_prize_tagline: "توقع وتنافس",
   pred_rank_label: "رتبة",
   pred_leader_label: "قائد",
-  pred_you: "(أنت)",  
+  pred_you: "(أنت)",
 
   // Login
   login_title: "مرحباً بعودتك",
