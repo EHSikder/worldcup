@@ -37,7 +37,7 @@ export default function HomePage() {
   }));
 
   const translations = {
-    prize_title: locale === 'ar' ? 'هل تريد التوقع والفوز بـ 1000 دولار؟' : 'Want to Predict and Win $1000?',
+    prize_title: locale === 'ar' ? 'تريد أن تتوقع وتكون الأول؟' : 'Want to Predict and be First',
     prize_desc: locale === 'ar' ? 'كن صاحب المركز الأول على مستوى العالم في نهاية البطولة واربح الجائزة الكبرى!' : 'Be the #1 worldwide ranker at the end of the tournament and take home the grand prize!',
     predict_now_btn: locale === 'ar' ? 'توقع الآن' : 'Predict Now',
     hero_prize: locale === 'ar' ? 'المركز الأول يربح 1000 دولار 💰' : '1st Place Wins $1000 💰',
