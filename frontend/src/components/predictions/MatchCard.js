@@ -89,8 +89,12 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
         transition: 'all 0.3s ease',
         borderRadius: 24,
         padding: 24,
-        border: showLiveScore ? '1px solid var(--color-gold)' : '1px solid #EBEBEC',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+        border: match.status === 'live' || match.status === 'halftime' || match.status === 'extra_time' || match.status === 'penalties'
+          ? '2px solid rgba(220,38,38,0.6)'
+          : '1px solid #EBEBEC',
+        boxShadow: match.status === 'live' || match.status === 'halftime' || match.status === 'extra_time' || match.status === 'penalties'
+          ? '0 0 0 4px rgba(220,38,38,0.1), 0 0 20px rgba(220,38,38,0.15)'
+          : '0 4px 20px rgba(0,0,0,0.03)',
         backgroundColor: '#FFFFFF',
         opacity: isLocked ? 0.85 : 1,
       }}
