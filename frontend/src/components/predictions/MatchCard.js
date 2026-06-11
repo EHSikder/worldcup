@@ -103,7 +103,14 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <span style={{ fontWeight: 600, color: '#8899B4', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
           {stageLabels[match.round]}
-          {isLocked && <span style={{ color: 'var(--color-primary-red)', marginLeft: 8 }}>🔒</span>}
+          {isLocked && (
+            <svg style={{ marginLeft: 8, verticalAlign: 'middle', display: 'inline-block' }}
+              width="13" height="13" viewBox="0 0 24 24" fill="none"
+              stroke="#8899B4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          )}
         </span>
         <span style={{ background: '#F3F4F6', padding: '4px 12px', borderRadius: 12, fontSize: '0.85rem', fontWeight: 700, color: '#111827' }} dir="ltr">
           {match.kickoff_time
