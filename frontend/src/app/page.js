@@ -66,7 +66,7 @@ export default function HomePage() {
 
             {/* Main headline — single line, centered */}
             <h1 className="hero-title">
-              {isArabic ? 'توقّع. تنافس. ارتقِ.' : 'PREDICT. COMPETE. RISE.'}
+              {isArabic ? 'توقّع. تنافس. تصدّر.' : 'PREDICT. COMPETE. RISE.'}
             </h1>
 
             {/* CTA buttons */}
