@@ -18,7 +18,7 @@ export const ar = {
   hero_left_line2: "تنافس.",
   hero_left_line3: "ارتقِ.",
   hero_right_subtitle: "تحدي R-Build لكأس العالم",
-  hero_right_title: "توقّع. تنافس. ارتقِ.",
+  hero_right_title: "توقّع. تنافس.تصدّر.",
 
   // Homepage - Steps
   steps_title: "كيف تعمل المسابقة؟",
