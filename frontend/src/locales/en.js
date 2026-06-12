@@ -8,22 +8,22 @@ export const en = {
   nav_language: "عربي",
 
   // Homepage - Hero
-  hero_badge: "R BUILD Prediction Challenge",
-  hero_title: "Predict the Tournament Scores",
-  hero_desc_1: "Predict Your Score from the Group Stage to the Final. Predict match winners, guess exact scores, and compete against colleagues and friends.",
-  hero_desc_2: "Grand Prize: $1000 for the 1st Place Winner!",
-  hero_cta_primary: "Predict & Win",
-  hero_cta_secondary: "View Leaderboard",
+  hero_badge: "R BUILD WORLD CUP CHALLENGE",
+  hero_title: "PREDICT. COMPETE. RISE.",
+  hero_desc_1: "Predict match winners, guess exact scores, and compete against colleagues and friends to climb the leaderboard.",
+  hero_desc_2: "Compete against everyone and rise to the top!",
+  hero_cta_primary: "Predict Now",
+  hero_cta_secondary: "Leaderboard",
 
   // Homepage - Steps
   steps_title: "How It Works",
   steps_subtitle: "Three simple steps to join R-Build World Cup Challenge",
   step_1_title: "Sign Up Securely",
-  step_1_desc: "Sign up instantly and Set up your profile with your favorite team to get started.",
+  step_1_desc: "Sign up instantly and set up your profile with your favorite team to get started.",
   step_2_title: "Predict Every Match",
-  step_2_desc: "Predict match results and exact scores before kickoff..",
-  step_3_title: "Win $1000",
-  step_3_desc: "Top the leaderboard at the end of the tournament and you walk away with the grand prize of $1000!",
+  step_2_desc: "Predict match results and exact scores before kickoff.",
+  step_3_title: "Lead the Board",
+  step_3_desc: "Earn points throughout the tournament, climb the leaderboard, and become the R-Build Champion.",
 
   // Homepage - Scoring
   scoring_title: "Scoring System",
@@ -34,7 +34,7 @@ export const en = {
   scoring_exact_bonus_title: "⚡ Exact Score Bonus",
   scoring_exact_bonus_desc: "Earn bonus points in any round if you predict the exact score perfectly!",
 
-  // Scoring rounds (used in scoring cards)
+  // Scoring rounds
   scoring_round_group: "Group Stage",
   scoring_round_r32: "Round of 32",
   scoring_round_r16: "Round of 16",
@@ -49,8 +49,8 @@ export const en = {
   group: "Group",
 
   // Homepage - Bottom CTA
-  cta_title: "Want to Predict and Win $1000?",
-  cta_subtitle: "Join the challenge, outsmart the competition, and the top predictor takes home the $1000 Grand Prize!",
+  cta_title: "Ready to Compete?",
+  cta_subtitle: "Join the challenge, outsmart the competition, and prove you're the best predictor in the tournament!",
   cta_btn: "Start Predicting Now",
 
   // Footer
@@ -73,15 +73,15 @@ export const en = {
   lb_subtitle: "Top predictors ranked by total points earned",
   lb_search: "Search players...",
   lb_empty: "No predictions submitted yet. Be the first to fill your bracket.",
-  lb_prize: "$1000 Prize",
+  lb_prize: "Top Predictor",
   lb_points: "Points",
   lb_col_rank: "Rank",
   lb_col_user: "User name",
   lb_col_team: "Team",
-  lb_grand_prize_label: "Grand Prize",
-  lb_grand_prize_tagline: "Predict & Win",
-  lb_grand_champion_title: "Grand Prize:",
-  lb_grand_champion_subtitle: "Top predictor wins it all",
+  lb_grand_prize_label: "Top Predictor",
+  lb_grand_prize_tagline: "Predict & Compete",
+  lb_grand_champion_title: "Lead the Board",
+  lb_grand_champion_subtitle: "Top predictor takes the crown",
 
   // Predictions
   pred_title: "Match Predictions",
@@ -92,8 +92,8 @@ export const en = {
   pred_match: "Match",
   pred_exact_score: "Predict Exact Score (+10 pts bonus)",
   pred_draw: "Draw",
-  pred_prize_label: "Grand Prize Pool",
-  pred_prize_tagline: "Predict & Win",
+  pred_prize_label: "Compete & Rise",
+  pred_prize_tagline: "Lead the Board",
   pred_rank_label: "Rank",
   pred_leader_label: "Leader",
   pred_you: "(You)",
@@ -112,5 +112,4 @@ export const en = {
   profile_team_ph: "Search for a team...",
   profile_submit: "Complete Setup",
   profile_saving: "Saving...",
-
 };
