@@ -184,28 +184,29 @@ export default function LeaderboardPage() {
         </div>
 
         <div style={{
-          background: '#FFFFFF',
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
           borderRadius: 16,
           padding: '14px 18px',
           marginBottom: 20,
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          border: '1px solid #F3F4F6',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+          border: '1px solid rgba(212,168,67,0.3)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
         }}>
           <div style={{
             width: 40, height: 40, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #FFD700, #F7B731)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
+            background: 'linear-gradient(135deg, #D4A843, #F7B731)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0
           }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 17.5L6 21L7.5 14.5L2 10H8.5L12 3L15.5 10H22L16.5 14.5L18 21L12 17.5Z" fill="#7A5A00" />
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7 4V2H17V4H20C20.55 4 21 4.45 21 5V8C21 9.66 19.66 11 18 11H17.24C16.45 13.17 14.42 14.73 12 14.97V18H15V20H9V18H12V14.97C9.58 14.73 7.55 13.17 6.76 11H6C4.34 11 3 9.66 3 8V5C3 4.45 3.45 4 4 4H7Z" fill="#7A5A00"/>
             </svg>
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827' }}>{t('lb_grand_champion_title')} <span style={{ fontWeight: 800, color: '#D4A843' }}>$1,000</span></div>
-            <div style={{ fontSize: '0.8rem', color: '#9CA3AF', fontWeight: 500 }}>{t('lb_grand_champion_subtitle')}</div>
+            <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#D4A843' }}>{t('lb_grand_champion_title')}</div>
+            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>{t('lb_grand_champion_subtitle')}</div>
           </div>
         </div>
 
