@@ -64,12 +64,9 @@ export default function HomePage() {
               {isArabic ? t('hero_right_subtitle') : 'R-BUILD WORLD CUP CHALLENGE'}
             </p>
 
-            {/* Main headline — matches image exactly */}
+            {/* Main headline — single line, centered */}
             <h1 className="hero-title">
-              {isArabic
-                ? <>توقّع.<br />تنافس.<br />ارتقِ.</>
-                : <>PREDICT.<br />COMPETE.<br />RISE.</>
-              }
+              {isArabic ? 'توقّع. تنافس. ارتقِ.' : 'PREDICT. COMPETE. RISE.'}
             </h1>
 
             {/* CTA buttons */}
