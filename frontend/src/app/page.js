@@ -5,17 +5,10 @@ import { SCORING_TABLE, GROUPS } from '@/lib/constants';
 import api from '@/lib/api';
 import { useLanguage } from '@/context/LanguageContext';
 
-function TrophyHeroIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48" style={{ color: 'var(--color-gold)' }}>
-      <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
-    </svg>
-  );
-}
-
 function ArrowIcon({ locale }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20" style={{ transform: locale === 'ar' ? 'rotate(180deg)' : 'none' }}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"
+      style={{ transform: locale === 'ar' ? 'rotate(180deg)' : 'none' }}>
       <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
@@ -24,6 +17,7 @@ function ArrowIcon({ locale }) {
 export default function HomePage() {
   const [teams, setTeams] = useState([]);
   const { t, locale } = useLanguage();
+  const isArabic = locale === 'ar';
 
   useEffect(() => {
     api.get('/api/teams').then(res => {
@@ -33,51 +27,66 @@ export default function HomePage() {
 
   const groupedTeams = GROUPS.map(g => ({
     letter: g,
-    teams: teams.filter(t => t.group_letter === g),
+    teams: teams.filter(tm => tm.group_letter === g),
   }));
-
-  const translations = {
-    prize_title: locale === 'ar' ? 'تريد أن تتوقع وتكون الأول؟' : 'Want to Predict and be First',
-    prize_desc: locale === 'ar' ? 'كن صاحب المركز الأول على مستوى العالم في نهاية البطولة واربح الجائزة الكبرى!' : 'Be the #1 worldwide ranker at the end of the tournament and take home the grand prize!',
-    predict_now_btn: locale === 'ar' ? 'توقع الآن' : 'Predict Now',
-    hero_prize: locale === 'ar' ? 'المركز الأول يربح 1000 دولار 💰' : '1st Place Wins $1000 💰',
-  };
 
   return (
     <>
-      {/* Hero */}
+      {/* ── HERO BANNER ─────────────────────────────────────────── */}
       <section className="hero-new" style={{ direction: 'ltr' }}>
-        {/* Desktop background — switches by locale */}
+        {/* Background images — user uploads their own */}
         <div
           className="hero-new-bg hero-bg-desktop"
-          style={{ backgroundImage: locale === 'ar' ? "url('/images/banner-desktop-ar.jpg')" : "url('/images/banner-desktop-en.jpg')" }}
+          style={{
+            backgroundImage: isArabic
+              ? "url('/images/banner-desktop-ar.jpg')"
+              : "url('/images/banner-desktop-en.jpg')"
+          }}
         />
-        {/* Mobile background — switches by locale */}
         <div
           className="hero-new-bg hero-bg-mobile"
-          style={{ backgroundImage: locale === 'ar' ? "url('/images/banner-mobile-ar.jpg')" : "url('/images/banner-mobile-en.jpg')" }}
+          style={{
+            backgroundImage: isArabic
+              ? "url('/images/banner-mobile-ar.jpg')"
+              : "url('/images/banner-mobile-en.jpg')"
+          }}
         />
 
-        {/* Left Side — image only, no text */}
+        {/* Left side — empty image area */}
         <div className="hero-new-left" />
 
-        {/* Right Side — Always visible */}
-        <div className="hero-new-right" style={{ direction: locale === 'ar' ? 'rtl' : 'ltr' }}>
+        {/* Right side — all text */}
+        <div className="hero-new-right" style={{ direction: isArabic ? 'rtl' : 'ltr' }}>
           <div className="hero-right-content">
-            <h2 className="hero-subtitle">{locale === 'ar' ? t('hero_right_subtitle') : 'R-BUILD WORLD CUP CHALLENGE'}</h2>
-            <h1 className="hero-title">{locale === 'ar' ? 'قيادة مجلس الإدارة' : 'LEAD THE BOARD'}</h1>
-            <p className="hero-desc">
-              {locale === 'ar' ? t('hero_desc_1') : 'Predict match results and scores, earn points, climb the leaderboard, and become the R-Build Champion.'}
+
+            {/* Eyebrow label */}
+            <p className="hero-subtitle">
+              {isArabic ? t('hero_right_subtitle') : 'R-BUILD WORLD CUP CHALLENGE'}
             </p>
+
+            {/* Main headline — matches image exactly */}
+            <h1 className="hero-title">
+              {isArabic
+                ? <>توقّع.<br />تنافس.<br />ارتقِ.</>
+                : <>PREDICT.<br />COMPETE.<br />RISE.</>
+              }
+            </h1>
+
+            {/* CTA buttons */}
             <div className="hero-actions">
-              <Link href="/login" className="btn-predict">{locale === 'ar' ? t('hero_cta_primary') : 'PREDICT'}</Link>
-              <Link href="/leaderboard" className="link-leaderboard">{locale === 'ar' ? t('hero_cta_secondary') : 'LEADERBOARD'}</Link>
+              <Link href="/login" className="btn-predict">
+                {isArabic ? t('hero_cta_primary') : 'Predict Now'}
+              </Link>
+              <Link href="/leaderboard" className="link-leaderboard">
+                {isArabic ? t('hero_cta_secondary') : 'LEADERBOARD'}
+              </Link>
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* ── HOW IT WORKS ────────────────────────────────────────── */}
       <section className="section" style={{ background: 'var(--color-surface-dark)' }}>
         <div className="container">
           <div className="section-header">
@@ -95,7 +104,7 @@ export default function HomePage() {
               <h3>{t('step_2_title')}</h3>
               <p>{t('step_2_desc')}</p>
             </div>
-            <div className="card step-card" style={{ border: '2px solid var(--color-gold)' }}>
+            <div className="card step-card">
               <div className="step-number">3</div>
               <h3>{t('step_3_title')}</h3>
               <p>{t('step_3_desc')}</p>
@@ -104,13 +113,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Scoring */}
+      {/* ── SCORING ─────────────────────────────────────────────── */}
       <section className="section">
         <div className="container">
           <div className="section-header">
             <h2>{t('scoring_title')}</h2>
             <p>{t('scoring_subtitle')}</p>
           </div>
+
+          {/* Exact score bonus card */}
           <div style={{
             background: 'linear-gradient(135deg, #5F27E4 0%, #3d1a9e 100%)',
             border: '2px solid #A9DF00',
@@ -128,7 +139,6 @@ export default function HomePage() {
             position: 'relative',
             overflow: 'hidden'
           }}>
-            {/* Glow effect */}
             <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(169,223,0,0.15)', pointerEvents: 'none' }} />
             <div style={{ position: 'absolute', bottom: -20, left: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(169,223,0,0.1)', pointerEvents: 'none' }} />
             <h3 style={{ color: '#A9DF00', marginBottom: '8px', fontSize: '1.4rem', fontWeight: 900, letterSpacing: '0.03em', position: 'relative' }}>{t('scoring_exact_bonus_title')}</h3>
@@ -149,7 +159,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Groups */}
+      {/* ── GROUPS ──────────────────────────────────────────────── */}
       <section className="section" style={{ background: 'var(--color-surface-dark)' }}>
         <div className="container">
           <div className="section-header">
@@ -181,14 +191,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA -> Prizes Section */}
-      <section className="section" style={{ textAlign: 'center', background: 'linear-gradient(to top, rgba(212,168,67,0.1), transparent)' }}>
-        <div className="container">        
+      {/* ── BOTTOM CTA ──────────────────────────────────────────── */}
+      <section className="section" style={{ textAlign: 'center', background: 'linear-gradient(to top, rgba(212,168,67,0.08), transparent)' }}>
+        <div className="container">
+          <h2 style={{ marginBottom: 'var(--space-4)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)' }}>
+            {t('cta_title')}
+          </h2>
           <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-8)', fontSize: 'var(--fs-lg)', maxWidth: 600, margin: '0 auto var(--space-8)' }}>
-            {translations.prize_desc}
+            {t('cta_subtitle')}
           </p>
           <Link href="/login" className="btn-predict" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            {translations.predict_now_btn} <ArrowIcon locale={locale} />
+            {t('cta_btn')} <ArrowIcon locale={locale} />
           </Link>
         </div>
       </section>
