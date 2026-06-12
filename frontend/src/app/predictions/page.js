@@ -256,7 +256,7 @@ export default function PredictionsPage() {
 
         <NotificationBanner />
 
-        {/* Prize Pool Banner */}
+        {/* Compete Banner */}
         <div style={{
           background: 'linear-gradient(135deg, #5F27E4 0%, #3d1a9e 100%)',
           borderRadius: 20, padding: '20px 24px', marginBottom: 20,
@@ -265,12 +265,11 @@ export default function PredictionsPage() {
         }}>
           <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: 'rgba(169,223,0,0.15)', pointerEvents: 'none' }} />
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A9DF00', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>
-              {t('lb_grand_prize_label')}
+            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A9DF00', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>
+              {t('pred_prize_label')}
             </div>
-            <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em' }}>$1,000</div>
-            <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600, marginTop: 2 }}>
-              {t('lb_grand_prize_tagline')}
+            <div style={{ fontSize: '2rem', fontWeight: 900, color: '#ffffff', letterSpacing: '0.02em', lineHeight: 1.1 }}>
+              {t('pred_prize_tagline')}
             </div>
           </div>
         </div>
