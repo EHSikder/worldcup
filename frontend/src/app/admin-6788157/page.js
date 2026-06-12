@@ -269,6 +269,24 @@ function UsersTab() {
     } catch { setUserPreds(null); }
   };
 
+  const [banTarget, setBanTarget] = useState(null);
+  const [banLoading, setBanLoading] = useState(false);
+
+  const handleBan = async () => {
+    if (!banTarget) return;
+    setBanLoading(true);
+    try {
+      await api.post(`/api/admin/users/${banTarget.id}/ban`, {
+        is_banned: !banTarget.is_banned
+      }, { adminAuth: true });
+      setBanTarget(null);
+      fetchUsers();
+    } catch (err) {
+      alert('Action failed: ' + (err.message || 'Unknown error'));
+    }
+    setBanLoading(false);
+  };
+
   const handleExport = async (format) => {
     try {
       const res = await api.request(`/api/admin/export?type=users&format=${format}`, { adminAuth: true });
@@ -310,6 +328,7 @@ function UsersTab() {
                 <th>Status</th>
                 <th>Points</th>
                 <th>Joined</th>
+                <th>Banned</th>
                 <th></th>
               </tr>
             </thead>
@@ -339,7 +358,24 @@ function UsersTab() {
                   <td><span className="points-display" style={{ fontSize: 'var(--fs-sm)' }}>{u.total_points || 0}</span></td>
                   <td style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{new Date(u.created_at).toLocaleDateString()}</td>
                   <td>
+                    {u.is_banned && (
+                      <span className="badge badge-red" style={{ fontSize: '0.7rem' }}>Banned</span>
+                    )}
+                  </td>
+                  <td style={{ display: 'flex', gap: 4 }}>
                     <button className="btn btn-ghost btn-sm" onClick={() => viewPredictions(u)}>View</button>
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => setBanTarget(u)}
+                      style={{
+                        background: u.is_banned ? 'rgba(0,200,100,0.1)' : 'rgba(228,0,43,0.1)',
+                        border: u.is_banned ? '1px solid rgba(0,200,100,0.4)' : '1px solid rgba(228,0,43,0.4)',
+                        color: u.is_banned ? '#00c864' : '#E4002B',
+                        fontWeight: 600, fontSize: '0.78rem', padding: '4px 10px'
+                      }}
+                    >
+                      {u.is_banned ? 'Unban' : 'Ban'}
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -356,6 +392,42 @@ function UsersTab() {
           <button className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</button>
           <span style={{ padding: 'var(--space-2) var(--space-4)', fontSize: 'var(--fs-sm)', color: 'var(--color-text-muted)' }}>Page {page} of {pagination.pages}</span>
           <button className="btn btn-ghost btn-sm" disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}>Next</button>
+        </div>
+      )}
+
+      {/* Ban / Unban Confirmation Modal */}
+      {banTarget && (
+        <div className="modal-backdrop" onClick={() => setBanTarget(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 440 }}>
+            <div className="modal-header">
+              <h3>{banTarget.is_banned ? 'Unban User' : 'Ban User'}</h3>
+              <button className="modal-close" onClick={() => setBanTarget(null)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ marginBottom: 'var(--space-4)', color: 'var(--color-text-muted)' }}>
+                {banTarget.is_banned
+                  ? <>Are you sure you want to <strong style={{ color: '#00c864' }}>unban</strong> <strong>{banTarget.full_name}</strong>? They will be able to sign in again.</>
+                  : <>Are you sure you want to <strong style={{ color: '#E4002B' }}>ban</strong> <strong>{banTarget.full_name}</strong>? They will be blocked from signing in. Their Firebase account remains intact.</>
+                }
+              </p>
+              <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end' }}>
+                <button className="btn btn-secondary btn-sm" onClick={() => setBanTarget(null)}>Cancel</button>
+                <button
+                  className="btn btn-sm"
+                  onClick={handleBan}
+                  disabled={banLoading}
+                  style={{
+                    background: banTarget.is_banned ? 'rgba(0,200,100,0.15)' : 'rgba(228,0,43,0.15)',
+                    border: banTarget.is_banned ? '1px solid #00c864' : '1px solid #E4002B',
+                    color: banTarget.is_banned ? '#00c864' : '#E4002B',
+                    fontWeight: 700
+                  }}
+                >
+                  {banLoading ? '...' : banTarget.is_banned ? 'Yes, Unban' : 'Yes, Ban User'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
