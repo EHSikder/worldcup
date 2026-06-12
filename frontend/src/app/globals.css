@@ -778,8 +778,35 @@ h4 { font-size: var(--fs-xl); }
   color: #C4FF00;
 }
 
-/* Hide left panel on mobile and tablet */
-@media (max-width: 1024px) {
+/* Tablet: 768px–1024px — keep full two-panel desktop layout, just shrink fonts */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .hero-new {
+    height: 55vw;          /* scales with viewport so both panels stay visible */
+    min-height: 380px;
+    max-height: 540px;
+  }
+  .hero-title {
+    font-size: clamp(1.4rem, 3vw, 2.8rem);
+    white-space: nowrap;
+  }
+  .hero-subtitle {
+    font-size: 0.72rem;
+  }
+  .hero-desc {
+    font-size: 0.82rem;
+    max-width: 340px;
+  }
+  .btn-predict {
+    font-size: 0.95rem;
+    padding: 10px 32px;
+  }
+  .link-leaderboard {
+    font-size: 0.72rem;
+  }
+}
+
+/* Mobile only: collapse to single column */
+@media (max-width: 768px) {
   .hero-new-left {
     display: none !important;
   }
