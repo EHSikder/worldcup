@@ -10,12 +10,12 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const cairo = Cairo({ subsets: ['arabic'], variable: '--font-cairo' });
 
 export const metadata = {
-  title: 'R BUILD Predictor — Win With Our Program',
+  title: 'R BUILD Predictor — Predict. Compete. Rise.',
   description: 'Predict match scores and compete for glory in the R BUILD knockout prediction challenge.',
   keywords: 'R BUILD, bracket prediction, competition, prediction game',
 
   openGraph: {
-    title: 'R BUILD Predictor — Win With Our Program',
+    title: 'R BUILD Predictor — Predict. Compete. Rise.',
     description: 'Predict the champion and compete in the ultimate R BUILD prediction challenge.',
     type: 'website',
     images: [
@@ -30,7 +30,7 @@ export const metadata = {
 
   twitter: {
     card: 'summary_large_image',
-    title: 'R BUILD Predictor — Win With Our Program',
+    title: 'R BUILD Predictor — Predict. Compete. Rise.',
     description: 'Predict the champion and compete in the ultimate R BUILD prediction challenge.',
     images: ['/images/share-image.jpg'],
   },
