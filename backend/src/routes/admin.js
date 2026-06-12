@@ -444,4 +444,51 @@ router.get('/stats', adminAuth, async (req, res, next) => {
   }
 });
 
+
+/* ─── Ban / Unban a user ─────────────────────────────────────────── */
+router.post('/users/:id/ban', adminAuth, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { is_banned } = req.body;
+
+    if (typeof is_banned !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'is_banned must be a boolean.' });
+    }
+
+    // Update the user record
+    const { data, error } = await supabase
+      .from('users')
+      .update({ is_banned, jwt_token_version: supabase.rpc ? undefined : undefined, updated_at: new Date() })
+      .eq('id', id)
+      .select('id, full_name, is_banned')
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ success: false, message: 'User not found.' });
+
+    // Also bump jwt_token_version to invalidate any existing tokens
+    await supabase
+      .from('users')
+      .update({ jwt_token_version: supabase.rpc ? undefined : undefined })
+      .eq('id', id);
+
+    // Increment token version to force re-login if banned
+    await supabase.rpc('increment_token_version', { user_id: id }).catch(() => {
+      // Fallback: raw increment
+      return supabase
+        .from('users')
+        .update({ jwt_token_version: (data.jwt_token_version || 1) + 1 })
+        .eq('id', id);
+    });
+
+    res.json({
+      success: true,
+      message: is_banned ? `User ${data.full_name} has been banned.` : `User ${data.full_name} has been unbanned.`,
+      data,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
