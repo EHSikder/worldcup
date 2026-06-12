@@ -206,7 +206,7 @@ export default function CompleteProfilePage() {
 
               {/* Company Name */}
               <div className="form-group">
-                <label className="form-label">{t('Company Name') || 'Company Name'} <span style={{ color: 'var(--color-primary-red)' }}>*</span></label>                
+                <label className="form-label">{t('Company Name') || 'Company ID'} <span style={{ color: 'var(--color-primary-red)' }}>*</span></label>                
                 <input
                   type="text"
                   className="form-input"
