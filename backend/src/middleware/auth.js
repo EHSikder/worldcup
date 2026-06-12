@@ -20,7 +20,7 @@ async function auth(req, res, next) {
     // Fetch user from database to ensure they still exist and are verified
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, full_name, mobile_number, email, civil_id, favorite_team_id, is_verified, has_submitted_prediction, total_points, jwt_token_version')
+      .select('id, full_name, mobile_number, email, civil_id, favorite_team_id, is_verified, is_banned, has_submitted_prediction, total_points, jwt_token_version')
       .eq('id', decoded.userId)
       .single();
 
@@ -35,6 +35,14 @@ async function auth(req, res, next) {
       return res.status(403).json({
         success: false,
         message: 'Account not verified. Please verify your OTP.',
+      });
+    }
+
+    // Check if user is banned
+    if (user.is_banned) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been suspended. Please contact support.',
       });
     }
 
