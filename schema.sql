@@ -51,11 +51,11 @@ CREATE TABLE public.users (
   mobile_number text NOT NULL UNIQUE,
   email text NOT NULL,
   firebase_uid text,
-  civil_id character CHECK (civil_id ~ '^\d{12}$'::text),
+  civil_id text CHECK (civil_id IS NULL OR civil_id ~ '^\d{12}$'::text),
   favorite_team_id uuid,
   otp_code text,
   otp_expires_at timestamp with time zone,
-  is_verified boolean DEFAULT false,
+  is_verified boolean DEFAULT true,
   has_submitted_prediction boolean DEFAULT false,
   total_points integer DEFAULT 0,
   jwt_token_version integer DEFAULT 1,
@@ -64,6 +64,8 @@ CREATE TABLE public.users (
   display_name text,
   company_name text NOT NULL,
   hear_about_us text,
+  is_banned boolean NOT NULL DEFAULT false,
+  password_hash text,
   CONSTRAINT users_pkey PRIMARY KEY (id),
   CONSTRAINT users_favorite_team_id_fkey FOREIGN KEY (favorite_team_id) REFERENCES public.teams(id)
 );
