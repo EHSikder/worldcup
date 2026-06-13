@@ -1,45 +1,59 @@
-const express = require('express');
-const router = express.Router();
+const express  = require('express');
+const router   = express.Router();
+const bcrypt   = require('bcryptjs');
 const supabase = require('../config/database');
 const { signUserToken } = require('../utils/jwt');
-const auth = require('../middleware/auth');
-const admin = require('../config/firebase');
+const auth     = require('../middleware/auth');
 
-/**
- * POST /api/auth/firebase-login
- * Receives Firebase ID token, verifies it, and logs the user in if they exist.
- */
-router.post('/firebase-login', async (req, res, next) => {
+/* ─────────────────────────────────────────────────────────────
+   POST /api/auth/login
+   Email + password login — checks against password_hash in DB
+───────────────────────────────────────────────────────────── */
+router.post('/login', async (req, res, next) => {
   try {
-    const { token } = req.body;
-    if (!token) return res.status(400).json({ success: false, message: 'No token provided' });
+    const { email, password } = req.body;
 
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    const { email } = decodedToken;
-
-    const signInProvider = decodedToken.firebase?.sign_in_provider;
-    if (signInProvider === 'password' && !decodedToken.email_verified) {
-      return res.status(403).json({
-        success: false,
-        message: 'Please verify your email before logging in. Check your inbox for the verification link.',
-        code: 'EMAIL_NOT_VERIFIED'
-      });
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required.' });
     }
 
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, full_name, email, mobile_number, jwt_token_version, favorite_team_id')
-      .eq('email', email)
+      .select('id, full_name, email, mobile_number, password_hash, jwt_token_version, favorite_team_id, is_verified')
+      .eq('email', email.toLowerCase().trim())
       .single();
 
     if (error || !user) {
-      return res.status(404).json({
-        success: false,
-        message: 'Account not found. Please sign up first.'
+      return res.status(404).json({ success: false, message: 'No account found with this email. Please sign up.' });
+    }
+
+    if (!user.password_hash) {
+      return res.status(400).json({ success: false, message: 'This account has no password set. Please contact support.' });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+    if (!passwordMatch) {
+      return res.status(401).json({ success: false, message: 'Incorrect password. Please try again.' });
+    }
+
+    // If profile not complete, signal that
+    if (!user.full_name || !user.favorite_team_id) {
+      const tempToken = signUserToken({
+        userId: user.id,
+        email: user.email,
+        tokenVersion: user.jwt_token_version,
+      });
+      return res.json({
+        success: true,
+        requiresProfileCompletion: true,
+        data: {
+          token: tempToken,
+          user: { id: user.id, email: user.email },
+        },
       });
     }
 
-    const jwtToken = signUserToken({
+    const token = signUserToken({
       userId: user.id,
       email: user.email,
       tokenVersion: user.jwt_token_version,
@@ -49,183 +63,196 @@ router.post('/firebase-login', async (req, res, next) => {
       success: true,
       message: 'Login successful.',
       data: {
-        token: jwtToken,
+        token,
         user: {
-          id: user.id,
-          full_name: user.full_name,
-          email: user.email,
-          mobile_number: user.mobile_number,
+          id:               user.id,
+          full_name:        user.full_name,
+          email:            user.email,
+          mobile_number:    user.mobile_number,
           favorite_team_id: user.favorite_team_id,
         },
       },
     });
   } catch (err) {
-    console.error('Firebase Login Error:', err);
-    res.status(401).json({ success: false, message: 'Invalid Firebase token.' });
+    next(err);
   }
 });
 
-/**
- * POST /api/auth/firebase-signup
- * Receives Firebase ID token, checks if user exists. If not, signals to complete profile.
- */
-router.post('/firebase-signup', async (req, res, next) => {
+/* ─────────────────────────────────────────────────────────────
+   POST /api/auth/pre-signup
+   Validates email is not taken and returns a short-lived
+   session ticket used by /complete-profile.
+───────────────────────────────────────────────────────────── */
+router.post('/pre-signup', async (req, res, next) => {
   try {
-    const { token } = req.body;
-    if (!token) return res.status(400).json({ success: false, message: 'No token provided' });
+    const { email, password } = req.body;
 
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    const { email, name, uid } = decodedToken;
-
-    const signInProvider = decodedToken.firebase?.sign_in_provider;
-    if (signInProvider === 'password' && !decodedToken.email_verified) {
-      return res.status(403).json({
-        success: false,
-        message: 'Please verify your email first. Check your inbox for the verification link.',
-        code: 'EMAIL_NOT_VERIFIED'
-      });
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required.' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
     }
 
-    const { data: user } = await supabase
+    // Check if email already exists
+    const { data: existing } = await supabase
       .from('users')
       .select('id')
-      .eq('email', email)
-      .single();
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle();
 
-    if (user) {
-      return res.status(409).json({
-        success: false,
-        message: 'Account already exists. Please log in.'
-      });
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'An account with this email already exists. Please log in.' });
     }
 
-    return res.json({
+    // Hash password now, store it temporarily in a signed token
+    const password_hash = await bcrypt.hash(password, 12);
+
+    // Create a short-lived token carrying the hashed password
+    const { signUserToken: sign } = require('../utils/jwt');
+    const jwt = require('jsonwebtoken');
+    const env = require('../config/env');
+    const tempToken = jwt.sign(
+      { email: email.toLowerCase().trim(), password_hash, type: 'pre-signup' },
+      env.JWT_SECRET,
+      { expiresIn: '30m' }
+    );
+
+    res.json({
       success: true,
-      requiresProfileCompletion: true,
-      user: { email, name, firebase_uid: uid }
+      tempToken,
+      user: { email: email.toLowerCase().trim() },
     });
   } catch (err) {
-    console.error('Firebase Signup Error:', err);
-    res.status(401).json({ success: false, message: 'Invalid Firebase token.' });
+    next(err);
   }
 });
 
-/**
- * POST /api/auth/complete-profile
- * Creates a new user after sign-in with additional profile info.
- * New fields: display_name, company_name, hear_about_us
- * civil_id is now optional.
- */
+/* ─────────────────────────────────────────────────────────────
+   POST /api/auth/complete-profile
+   Creates the user in DB using the pre-signup temp token
+   + the profile fields filled in on the complete-profile page.
+───────────────────────────────────────────────────────────── */
 router.post('/complete-profile', async (req, res, next) => {
   try {
     const {
-      token,
+      tempToken,
       mobile_number,
       civil_id,
       favorite_team_id,
       full_name,
       display_name,
       company_name,
-      hear_about_us,
     } = req.body;
 
-    // Required fields
-    if (!token || !mobile_number || !favorite_team_id || !full_name || !display_name) {
-      return res.status(400).json({ success: false, message: 'Missing required fields: full_name, display_name, mobile_number, favorite_team_id' });
+    if (!tempToken) {
+      return res.status(400).json({ success: false, message: 'Session expired. Please sign up again.' });
+    }
+    if (!mobile_number || !favorite_team_id || !full_name || !display_name) {
+      return res.status(400).json({ success: false, message: 'Missing required fields.' });
     }
     if (!company_name || !company_name.trim()) {
       return res.status(400).json({ success: false, message: 'Company ID is required.' });
     }
-
-    // Validate civil_id only if provided
-    if (civil_id && civil_id.trim() !== '' && !/^\d{12}$/.test(civil_id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Civil ID must be exactly 12 numeric digits.',
-        code: 'INVALID_CIVIL_ID'
-      });
+    if (!civil_id || !civil_id.trim()) {
+      return res.status(400).json({ success: false, message: 'Civil ID is required.' });
+    }
+    if (!/^\d{12}$/.test(civil_id.trim())) {
+      return res.status(400).json({ success: false, message: 'Civil ID must be exactly 12 numeric digits.' });
     }
 
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    const { email, name, uid } = decodedToken;
+    // Verify the temp token
+    const jwt = require('jsonwebtoken');
+    const env = require('../config/env');
+    let payload;
+    try {
+      payload = jwt.verify(tempToken, env.JWT_SECRET);
+    } catch {
+      return res.status(401).json({ success: false, message: 'Session expired. Please sign up again.' });
+    }
 
-    // Check email isn't already taken
-    const { data: existingUser } = await supabase
+    if (payload.type !== 'pre-signup') {
+      return res.status(401).json({ success: false, message: 'Invalid session token.' });
+    }
+
+    const { email, password_hash } = payload;
+
+    // Double-check email still not taken
+    const { data: existingEmail } = await supabase
       .from('users')
       .select('id')
       .eq('email', email)
-      .single();
+      .maybeSingle();
 
-    if (existingUser) {
-      return res.status(409).json({ success: false, message: 'Account already exists' });
+    if (existingEmail) {
+      return res.status(409).json({ success: false, message: 'An account with this email already exists. Please log in.' });
     }
 
-    // Check mobile isn't already taken
+    // Check mobile not taken
     const { data: existingMobile } = await supabase
       .from('users')
       .select('id')
       .eq('mobile_number', mobile_number)
-      .single();
+      .maybeSingle();
 
     if (existingMobile) {
-      return res.status(409).json({ success: false, message: 'Mobile number already registered.' });
+      return res.status(409).json({ success: false, message: 'This mobile number is already registered.' });
     }
-
-    const insertData = {
-      full_name: full_name || name || 'User',
-      display_name: display_name.trim(),
-      company_name: (company_name && company_name.trim()) ? company_name.trim() : 'N/A',
-      hear_about_us: hear_about_us || null,
-      email,
-      firebase_uid: uid,
-      mobile_number,
-      civil_id: (civil_id && civil_id.trim()) ? civil_id.trim() : null,
-      favorite_team_id,
-      is_verified: true,
-    };
 
     const { data: user, error } = await supabase
       .from('users')
-      .insert(insertData)
+      .insert({
+        email,
+        password_hash,
+        full_name:        full_name.trim(),
+        display_name:     display_name.trim(),
+        company_name:     company_name.trim(),
+        mobile_number,
+        civil_id:         civil_id.trim(),
+        favorite_team_id,
+        is_verified:      true,
+        hear_about_us:    null,
+      })
       .select('id, full_name, display_name, email, mobile_number, jwt_token_version, favorite_team_id')
       .single();
 
     if (error) {
-      console.error('Insert Error:', error);
-      return res.status(500).json({ success: false, message: 'Failed to create account.' });
+      console.error('Insert error:', error);
+      return res.status(500).json({ success: false, message: 'Failed to create account. Please try again.' });
     }
 
-    const jwtToken = signUserToken({
-      userId: user.id,
-      email: user.email,
+    const token = signUserToken({
+      userId:       user.id,
+      email:        user.email,
       tokenVersion: user.jwt_token_version,
     });
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful.',
+      message: 'Account created successfully.',
       data: {
-        token: jwtToken,
+        token,
         user: {
-          id: user.id,
-          full_name: user.full_name,
-          display_name: user.display_name,
-          email: user.email,
-          mobile_number: user.mobile_number,
+          id:               user.id,
+          full_name:        user.full_name,
+          display_name:     user.display_name,
+          email:            user.email,
+          mobile_number:    user.mobile_number,
           favorite_team_id: user.favorite_team_id,
         },
       },
     });
   } catch (err) {
-    console.error('Complete Profile Error:', err);
-    res.status(401).json({ success: false, message: 'Authentication failed.' });
+    next(err);
   }
 });
 
-/**
- * GET /api/auth/me
- * Get current user profile (JWT protected)
- */
+/* ─────────────────────────────────────────────────────────────
+   GET /api/auth/me  (protected)
+───────────────────────────────────────────────────────────── */
 router.get('/me', auth, async (req, res, next) => {
   try {
     const { data: user, error } = await supabase
@@ -233,7 +260,7 @@ router.get('/me', auth, async (req, res, next) => {
       .select(`
         id, full_name, display_name, company_name, hear_about_us,
         mobile_number, email, civil_id, favorite_team_id,
-        is_verified, has_submitted_prediction, total_points, created_at, firebase_uid
+        is_verified, has_submitted_prediction, total_points, created_at
       `)
       .eq('id', req.user.id)
       .single();
@@ -255,28 +282,15 @@ router.get('/me', auth, async (req, res, next) => {
       .select('match_number, points_earned')
       .eq('user_id', req.user.id);
 
-    const totalPredictions = predictions?.length || 0;
+    const totalPredictions   = predictions?.length || 0;
     const correctPredictions = predictions?.filter(p => p.points_earned > 0).length || 0;
-    const pointsBreakdown = {};
-    (predictions || []).forEach(p => {
-      const round = p.match_number >= 73 && p.match_number <= 88 ? 'round_of_32'
-        : p.match_number >= 89 && p.match_number <= 96 ? 'round_of_16'
-        : p.match_number >= 97 && p.match_number <= 100 ? 'quarterfinal'
-        : p.match_number >= 101 && p.match_number <= 102 ? 'semifinal'
-        : 'final';
-      pointsBreakdown[round] = (pointsBreakdown[round] || 0) + (p.points_earned || 0);
-    });
 
     res.json({
       success: true,
       data: {
         ...user,
         favorite_team,
-        stats: {
-          total_predictions: totalPredictions,
-          correct_predictions: correctPredictions,
-          points_breakdown: pointsBreakdown,
-        },
+        stats: { total_predictions: totalPredictions, correct_predictions: correctPredictions },
       },
     });
   } catch (err) {
