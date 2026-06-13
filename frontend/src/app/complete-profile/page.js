@@ -6,16 +6,6 @@ import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { useLanguage } from '@/context/LanguageContext';
 
-const HEAR_ABOUT_OPTIONS = [
-  { value: 'instagram', label: 'Instagram' },
-  { value: 'facebook', label: 'Facebook' },
-  { value: 'twitter', label: 'Twitter / X' },
-  { value: 'whatsapp', label: 'WhatsApp' },
-  { value: 'friend', label: 'Friend or Family' },
-  { value: 'work', label: 'Colleague / Work' },
-  { value: 'other', label: 'Other' },
-];
-
 export default function CompleteProfilePage() {
   const router = useRouter();
   const { user, login, loading } = useAuth();
@@ -30,8 +20,6 @@ export default function CompleteProfilePage() {
     mobile_number: '',
     civil_id: '',
     favoriteTeamId: '',
-    hearAbout: '',
-    hearAboutOther: '',
   });
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -85,8 +73,11 @@ export default function CompleteProfilePage() {
       setError('Mobile number is required.');
       return;
     }
-    // Civil ID: only validate format if one was entered (it's optional)
-    if (formData.civil_id.trim() && !/^\d{12}$/.test(formData.civil_id)) {
+    if (!formData.civil_id.trim()) {
+      setError('Civil ID is required.');
+      return;
+    }
+    if (!/^\d{12}$/.test(formData.civil_id)) {
       setError('Civil ID must be exactly 12 numeric digits (e.g., 281234567890).');
       return;
     }
@@ -94,16 +85,8 @@ export default function CompleteProfilePage() {
       setError('Please select a favorite team by tapping on one below.');
       return;
     }
-    if (!formData.hearAbout) {
-      setError('Please let us know how you heard about us.');
-      return;
-    }
-    if (formData.hearAbout === 'other' && !formData.hearAboutOther.trim()) {
-      setError('Please tell us how you heard about us.');
-      return;
-    }
-    if (!formData.companyName.trim()) {
-      setError('Company ID is required.');
+if (!formData.companyName.trim()) {
+      setError('Company Name is required.');
       return;
     }
     
@@ -118,19 +101,14 @@ export default function CompleteProfilePage() {
         return;
       }
 
-      const hearAboutFinal = formData.hearAbout === 'other'
-        ? `Other: ${formData.hearAboutOther.trim()}`
-        : formData.hearAbout;
-
       const res = await api.post('/api/auth/complete-profile', {
         token,
         mobile_number: formData.mobile_number,
-        civil_id: formData.civil_id.trim() || null,
+        civil_id: formData.civil_id.trim(),
         favorite_team_id: formData.favoriteTeamId,
         full_name: formData.fullName,
         display_name: formData.displayName,
         company_name: formData.companyName.trim(),
-        hear_about_us: hearAboutFinal,
       });
 
       login(res.data.token, res.data.user);
@@ -240,11 +218,11 @@ export default function CompleteProfilePage() {
                 />
               </div>
 
-              {/* Civil ID (optional) */}
+              {/* Civil ID (required) */}
               <div className="form-group">
                 <label className="form-label">
-                  Civil ID
-                  <span style={{ fontWeight: 400, fontSize: '0.78rem', color: 'var(--color-text-muted)', marginLeft: 6 }}>optional · 12 digits</span>
+                  Civil ID <span style={{ color: 'var(--color-primary-red)' }}>*</span>
+                  <span style={{ fontWeight: 400, fontSize: '0.78rem', color: 'var(--color-text-muted)', marginLeft: 6 }}>12 digits</span>
                 </label>
                 <input
                   type="text"
@@ -254,50 +232,10 @@ export default function CompleteProfilePage() {
                   placeholder="e.g. 281234567890"
                   maxLength={12}
                   inputMode="numeric"
+                  required
                 />
               </div>
 
-            </div>
-
-            {/* Where did you hear about us */}
-            <div className="form-group" style={{ marginTop: 'var(--space-4)' }}>
-              <label className="form-label">
-                Where did you hear about us? <span style={{ color: 'var(--color-primary-red)' }}>*</span>
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
-                {HEAR_ABOUT_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, hearAbout: opt.value, hearAboutOther: '' })}
-                    style={{
-                      padding: '10px 14px',
-                      borderRadius: '14px',
-                      border: formData.hearAbout === opt.value ? '2px solid var(--color-gold)' : '1px solid var(--color-border)',
-                      background: formData.hearAbout === opt.value ? 'rgba(212,168,67,0.12)' : 'var(--color-surface-light)',
-                      color: formData.hearAbout === opt.value ? 'var(--color-gold)' : 'var(--color-text-primary)',
-                      fontWeight: formData.hearAbout === opt.value ? 700 : 500,
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              {formData.hearAbout === 'other' && (
-                <input
-                  type="text"
-                  className="form-input"
-                  style={{ marginTop: 'var(--space-3)' }}
-                  value={formData.hearAboutOther}
-                  onChange={e => setFormData({ ...formData, hearAboutOther: e.target.value })}
-                  placeholder="Tell us how you found out..."
-                  autoFocus
-                />
-              )}
             </div>
 
             {/* Favourite Team */}
