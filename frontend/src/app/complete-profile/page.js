@@ -94,7 +94,7 @@ if (!formData.companyName.trim()) {
     setError(null);
 
     try {
-      const token = sessionStorage.getItem('temp_firebase_token');
+      const token = sessionStorage.getItem('temp_presignup_token');
       if (!token) {
         setError('Session expired. Please try signing up again.');
         setSubmitting(false);
@@ -102,7 +102,7 @@ if (!formData.companyName.trim()) {
       }
 
       const res = await api.post('/api/auth/complete-profile', {
-        token,
+        tempToken,
         mobile_number: formData.mobile_number,
         civil_id: formData.civil_id.trim(),
         favorite_team_id: formData.favoriteTeamId,
@@ -112,7 +112,7 @@ if (!formData.companyName.trim()) {
       });
 
       login(res.data.token, res.data.user);
-      sessionStorage.removeItem('temp_firebase_token');
+      sessionStorage.removeItem('temp_presignup_token');
       sessionStorage.removeItem('temp_user_info');
       sessionStorage.setItem('wc2026_new_signup', 'true');
       router.push('/predictions');
