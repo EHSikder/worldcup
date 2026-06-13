@@ -1,26 +1,6 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
-};
-
-let app;
-let auth;
-let googleProvider;
-
-if (firebaseConfig.apiKey) {
-  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  auth = getAuth(app);
-  googleProvider = new GoogleAuthProvider();
-} else if (typeof window !== 'undefined') {
-  console.error("Firebase API Key is missing. Check your environment variables.");
-}
-
-export { app, auth, googleProvider };
+// Firebase removed — authentication is now handled directly via Supabase.
+// This file is kept as a stub to prevent import errors during migration.
+// You can delete it once you've confirmed no other file imports from here.
+export const app           = null;
+export const auth          = null;
+export const googleProvider = null;
