@@ -28,12 +28,17 @@ const allowedOrigins = env.FRONTEND_URL
 
 app.use(cors({
   origin: function (origin, callback) {
+    // Allow requests with no origin (server-to-server, curl, Render health checks)
     if (!origin) return callback(null, true);
+    // Wildcard allows all — useful if FRONTEND_URL=*
     if (allowedOrigins.includes('*')) return callback(null, true);
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+    // Always allow in non-production
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
+    // In production: check against env list
+    if (allowedOrigins.some(o => origin.startsWith(o) || o === origin)) {
       return callback(null, true);
     }
-    console.error(`CORS Error: Origin ${origin} not allowed.`);
+    console.error(`CORS blocked: ${origin} — add it to FRONTEND_URL in Render env`);
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
