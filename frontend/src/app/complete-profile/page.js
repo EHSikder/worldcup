@@ -94,10 +94,10 @@ if (!formData.companyName.trim()) {
     setError(null);
 
     try {
-      const token = sessionStorage.getItem('temp_presignup_token');
-      if (!token) {
-        setError('Session expired. Please try signing up again.');
-        setSubmitting(false);
+      const tempToken = sessionStorage.getItem('temp_presignup_token');
+      if (!tempToken) {
+        setError('Session expired. Please sign up again.');
+        router.push('/signup');
         return;
       }
 
