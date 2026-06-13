@@ -86,7 +86,7 @@ export default function CompleteProfilePage() {
       return;
     }
 if (!formData.companyName.trim()) {
-      setError('Company Name is required.');
+      setError('Company ID is required.');
       return;
     }
     
