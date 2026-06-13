@@ -133,6 +133,9 @@ router.post('/complete-profile', async (req, res, next) => {
     if (!token || !mobile_number || !favorite_team_id || !full_name || !display_name) {
       return res.status(400).json({ success: false, message: 'Missing required fields: full_name, display_name, mobile_number, favorite_team_id' });
     }
+    if (!company_name || !company_name.trim()) {
+      return res.status(400).json({ success: false, message: 'Company ID is required.' });
+    }
 
     // Validate civil_id only if provided
     if (civil_id && civil_id.trim() !== '' && !/^\d{12}$/.test(civil_id)) {
@@ -171,7 +174,7 @@ router.post('/complete-profile', async (req, res, next) => {
     const insertData = {
       full_name: full_name || name || 'User',
       display_name: display_name.trim(),
-      company_name: company_name?.trim() || null,
+      company_name: (company_name && company_name.trim()) ? company_name.trim() : 'N/A',
       hear_about_us: hear_about_us || null,
       email,
       firebase_uid: uid,
