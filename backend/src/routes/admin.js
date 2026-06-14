@@ -455,35 +455,38 @@ router.post('/users/:id/ban', adminAuth, async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'is_banned must be a boolean.' });
     }
 
-    // Update the user record
+    // 1. Fetch current jwt_token_version first
+    const { data: existing, error: fetchErr } = await supabase
+      .from('users')
+      .select('id, full_name, is_banned, jwt_token_version')
+      .eq('id', id)
+      .single();
+
+    if (fetchErr || !existing) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    // 2. Update is_banned + bump jwt_token_version to kick them out immediately
+    const newTokenVersion = (existing.jwt_token_version || 1) + 1;
+
     const { data, error } = await supabase
       .from('users')
-      .update({ is_banned, jwt_token_version: supabase.rpc ? undefined : undefined, updated_at: new Date() })
+      .update({
+        is_banned,
+        jwt_token_version: newTokenVersion,
+        updated_at: new Date(),
+      })
       .eq('id', id)
       .select('id, full_name, is_banned')
       .single();
 
     if (error) throw error;
-    if (!data) return res.status(404).json({ success: false, message: 'User not found.' });
-
-    // Also bump jwt_token_version to invalidate any existing tokens
-    await supabase
-      .from('users')
-      .update({ jwt_token_version: supabase.rpc ? undefined : undefined })
-      .eq('id', id);
-
-    // Increment token version to force re-login if banned
-    await supabase.rpc('increment_token_version', { user_id: id }).catch(() => {
-      // Fallback: raw increment
-      return supabase
-        .from('users')
-        .update({ jwt_token_version: (data.jwt_token_version || 1) + 1 })
-        .eq('id', id);
-    });
 
     res.json({
       success: true,
-      message: is_banned ? `User ${data.full_name} has been banned.` : `User ${data.full_name} has been unbanned.`,
+      message: is_banned
+        ? `${data.full_name} has been banned and logged out.`
+        : `${data.full_name} has been unbanned.`,
       data,
     });
   } catch (err) {
