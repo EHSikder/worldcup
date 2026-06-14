@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import MatchCard from '@/components/predictions/MatchCard';
@@ -23,7 +23,9 @@ export default function PredictionsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]         = useState('');
   const [userStanding, setUserStanding] = useState(null);
-  const [topPlayer, setTopPlayer] = useState(null);
+  const [topPlayer, setTopPlayer]   = useState(null);
+  const [targetMatchNum, setTargetMatchNum] = useState(null);
+  const matchRefs = useRef({});
 
   // ── Redirect if not logged in ──────────────────────────────
   useEffect(() => {
@@ -51,6 +53,26 @@ export default function PredictionsPage() {
           return new Date(a.kickoff_time) - new Date(b.kickoff_time);
         });
         setMatches(allMatches);
+
+        // Find the match to jump to:
+        // Priority 1 — any live match
+        // Priority 2 — next upcoming scheduled match
+        // Priority 3 — last finished match (fallback)
+        const LIVE_STATUSES = ['live', 'halftime', 'extra_time', 'penalties'];
+        const now = new Date();
+
+        const liveMatch = allMatches.find(m => LIVE_STATUSES.includes(m.status));
+
+        const nextScheduled = allMatches
+          .filter(m => m.status === 'scheduled' && m.kickoff_time && new Date(m.kickoff_time) > now)
+          .sort((a, b) => new Date(a.kickoff_time) - new Date(b.kickoff_time))[0];
+
+        const lastFinished = [...allMatches]
+          .filter(m => m.status === 'finished')
+          .sort((a, b) => new Date(b.kickoff_time) - new Date(a.kickoff_time))[0];
+
+        const jumpTarget = liveMatch || nextScheduled || lastFinished;
+        if (jumpTarget) setTargetMatchNum(jumpTarget.match_number);
 
         // Build match lookup to resolve home/away team IDs
         const matchMap = {};
@@ -156,6 +178,19 @@ export default function PredictionsPage() {
 
   }, [isAuthenticated, user?.id]);
 
+  // ── Auto-scroll to live / next match ─────────────────────────
+  useEffect(() => {
+    if (!targetMatchNum || loading) return;
+    // Small delay so DOM has rendered
+    const timer = setTimeout(() => {
+      const el = matchRefs.current[targetMatchNum];
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [targetMatchNum, loading]);
+
   // ── Unsaved changes detector ───────────────────────────────
   useEffect(() => {
     const changed = Object.keys(predictions).some(key => {
@@ -170,6 +205,13 @@ export default function PredictionsPage() {
     });
     setHasUnsavedChanges(changed && Object.keys(predictions).length > 0);
   }, [predictions, savedPredictions]);
+
+  // ── Scroll to target match ────────────────────────────────────
+  const scrollToTarget = useCallback(() => {
+    if (!targetMatchNum) return;
+    const el = matchRefs.current[targetMatchNum];
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [targetMatchNum]);
 
   // ── Prediction update from MatchCard ──────────────────────
   const handlePredict = (matchNum, predictionData) => {
@@ -329,14 +371,20 @@ export default function PredictionsPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
                 {stageMatches.map(match => (
-                  <MatchCard
+                  <div
                     key={match.match_number}
-                    match={match}
-                    prediction={predictions[match.match_number]}
-                    savedPrediction={savedPredictions[match.match_number]}
-                    onPredict={handlePredict}
-                  />
-                ))}
+                    ref={el => { matchRefs.current[match.match_number] = el; }}
+                    style={{ scrollMarginTop: 80 }}
+                  >
+                    <MatchCard
+                      match={match}
+                      prediction={predictions[match.match_number]}
+                      savedPrediction={savedPredictions[match.match_number]}
+                      onPredict={handlePredict}
+                    />
+                  </div>
+                  ))}
+                </div>
               </div>
             </div>
           );
@@ -353,6 +401,24 @@ export default function PredictionsPage() {
         transition: 'all 0.3s ease',
         boxShadow: hasUnsavedChanges ? '0 10px 30px rgba(169,223,0,0.25)' : '0 10px 25px rgba(0,0,0,0.15)',
       }}>
+        {targetMatchNum && (
+          <button
+            onClick={scrollToTarget}
+            style={{
+              background: 'none', border: '1.5px solid #E5E7EB',
+              borderRadius: 20, padding: '8px 16px',
+              fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+              color: '#374151', display: 'flex', alignItems: 'center', gap: 6,
+              flexShrink: 0,
+            }}
+          >
+            ⚽ {(() => {
+              const LIVE = ['live','halftime','extra_time','penalties'];
+              const t = matches.find(m => m.match_number === targetMatchNum);
+              return LIVE.includes(t?.status) ? 'Live Match' : 'Next Match';
+            })()}
+          </button>
+        )}
         {hasUnsavedChanges && (
           <span style={{ fontWeight: 700, color: '#1a2e00', fontSize: '0.9rem' }}>
             {t('pred_unsaved') || 'Unsaved Changes'}
