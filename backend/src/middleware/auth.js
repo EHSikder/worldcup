@@ -13,7 +13,7 @@ async function auth(req, res, next) {
 
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, full_name, mobile_number, email, civil_id, favorite_team_id, is_verified, has_submitted_prediction, total_points, jwt_token_version')
+      .select('id, full_name, mobile_number, email, civil_id, favorite_team_id, is_verified, is_banned, has_submitted_prediction, total_points, jwt_token_version')
       .eq('id', decoded.userId)
       .single();
 
@@ -24,6 +24,11 @@ async function auth(req, res, next) {
     // Check token version (lets us invalidate sessions)
     if (decoded.tokenVersion !== undefined && decoded.tokenVersion !== user.jwt_token_version) {
       return res.status(401).json({ success: false, message: 'Token has been invalidated. Please log in again.' });
+    }
+
+    // Block banned users on every request
+    if (user.is_banned) {
+      return res.status(403).json({ success: false, message: 'Your account has been suspended. Please contact support.' });
     }
 
     req.user = user;
