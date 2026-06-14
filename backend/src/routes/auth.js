@@ -19,7 +19,7 @@ router.post('/login', async (req, res, next) => {
 
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, full_name, email, mobile_number, password_hash, jwt_token_version, favorite_team_id, is_verified')
+      .select('id, full_name, email, mobile_number, password_hash, jwt_token_version, favorite_team_id, is_verified, is_banned')
       .eq('email', email.toLowerCase().trim())
       .single();
 
@@ -34,6 +34,11 @@ router.post('/login', async (req, res, next) => {
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatch) {
       return res.status(401).json({ success: false, message: 'Incorrect password. Please try again.' });
+    }
+
+    // Block banned users before they get a token
+    if (user.is_banned) {
+      return res.status(403).json({ success: false, message: 'Your account has been suspended. Please contact support.' });
     }
 
     // If profile not complete, signal that
@@ -293,6 +298,36 @@ router.get('/me', auth, async (req, res, next) => {
         stats: { total_predictions: totalPredictions, correct_predictions: correctPredictions },
       },
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+/* ─────────────────────────────────────────────────────────────
+   PUT /api/auth/profile  — update display name
+───────────────────────────────────────────────────────────── */
+const authMiddleware = require('../middleware/auth');
+
+router.put('/profile', authMiddleware, async (req, res, next) => {
+  try {
+    const { display_name } = req.body;
+    if (!display_name || !display_name.trim()) {
+      return res.status(400).json({ success: false, message: 'Display name cannot be empty.' });
+    }
+    if (display_name.trim().length > 30) {
+      return res.status(400).json({ success: false, message: 'Display name must be 30 characters or less.' });
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .update({ display_name: display_name.trim(), updated_at: new Date().toISOString() })
+      .eq('id', req.user.id)
+      .select('id, display_name')
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, message: 'Display name updated.', data });
   } catch (err) {
     next(err);
   }
