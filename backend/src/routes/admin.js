@@ -492,4 +492,43 @@ router.post('/users/:id/ban', adminAuth, async (req, res, next) => {
   }
 });
 
+
+/* ─── Delete a user entirely ─────────────────────────────────────── */
+router.delete('/users/:id', adminAuth, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Fetch first so we have the name for the response
+    const { data: user, error: fetchError } = await supabase
+      .from('users')
+      .select('id, full_name')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    // Delete child rows first (foreign key constraints)
+    await supabase.from('predictions').delete().eq('user_id', id);
+    await supabase.from('champion_predictions').delete().eq('user_id', id);
+    await supabase.from('push_subscriptions').delete().eq('user_id', id);
+
+    // Now delete the user row
+    const { error: deleteError } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) throw deleteError;
+
+    res.json({
+      success: true,
+      message: `${user.full_name} has been permanently deleted.`,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
