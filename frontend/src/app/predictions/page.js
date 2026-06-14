@@ -385,8 +385,7 @@ export default function PredictionsPage() {
                   </div>
                   ))}
                 </div>
-              </div>
-            </div>
+              </div>            
           );
         })}
       </div>
