@@ -11,20 +11,55 @@ import { NotificationBanner } from '@/components/NotificationPrompt';
 export default function ProfilePage() {
   const router = useRouter();
   const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile]           = useState(null);
+  const [loading, setLoading]           = useState(true);
+
+  // Display name editing
+  const [editingName, setEditingName]   = useState(false);
+  const [newDisplayName, setNewDisplayName] = useState('');
+  const [nameError, setNameError]       = useState('');
+  const [nameSaving, setNameSaving]     = useState(false);
+  const [nameSuccess, setNameSuccess]   = useState(false);
+
+  const fetchProfile = () => {
+    api.get('/api/auth/me').then(res => {
+      setProfile(res.data);
+      setNewDisplayName(res.data.display_name || '');
+    }).catch(() => {}).finally(() => setLoading(false));
+  };
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.replace('/login');
       return;
     }
-    if (isAuthenticated) {
-      api.get('/api/auth/me').then(res => {
-        setProfile(res.data);
-      }).catch(() => {}).finally(() => setLoading(false));
-    }
+    if (isAuthenticated) fetchProfile();
   }, [isAuthenticated, authLoading, router]);
+
+  const handleSaveDisplayName = async () => {
+    setNameError('');
+    setNameSuccess(false);
+    if (!newDisplayName.trim()) {
+      setNameError('Display name cannot be empty.');
+      return;
+    }
+    if (newDisplayName.trim().length > 30) {
+      setNameError('Display name must be 30 characters or less.');
+      return;
+    }
+    try {
+      setNameSaving(true);
+      await api.put('/api/auth/profile', { display_name: newDisplayName.trim() });
+      setNameSuccess(true);
+      setEditingName(false);
+      fetchProfile();
+      setTimeout(() => setNameSuccess(false), 3000);
+    } catch (err) {
+      setNameError(err.data?.message || err.message || 'Failed to update display name.');
+    } finally {
+      setNameSaving(false);
+    }
+  };
 
   if (authLoading || loading) {
     return <div className="loading-page"><div className="spinner spinner-lg" style={{ color: 'var(--color-gold)' }} /></div>;
@@ -38,8 +73,13 @@ export default function ProfilePage() {
     <div className="container" style={{ padding: 'var(--space-8) var(--space-6)', maxWidth: 800 }}>
       <h1 style={{ marginBottom: 'var(--space-8)' }}>My Profile</h1>
 
-      {/* ── Notification Banner ─────────────────────────────── */}
       <NotificationBanner />
+
+      {nameSuccess && (
+        <div className="alert alert-success" style={{ marginBottom: 'var(--space-4)' }}>
+          ✅ Display name updated successfully!
+        </div>
+      )}
 
       {/* Points Banner */}
       <div className="card card-highlighted" style={{ textAlign: 'center', marginBottom: 'var(--space-6)', padding: 'var(--space-8)' }}>
@@ -83,18 +123,70 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* User Info */}
+      {/* Account Details */}
       <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
         <h3 style={{ marginBottom: 'var(--space-4)', fontSize: 'var(--fs-lg)' }}>Account Details</h3>
         <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
+
+          {/* Display Name — editable */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-2) 0', borderBottom: '1px solid var(--color-border)', gap: 'var(--space-3)' }}>
+            <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--fs-sm)', flexShrink: 0 }}>Display Name</span>
+            {editingName ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flex: 1, justifyContent: 'flex-end' }}>
+                <input
+                  autoFocus
+                  type="text"
+                  value={newDisplayName}
+                  onChange={e => setNewDisplayName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSaveDisplayName(); if (e.key === 'Escape') setEditingName(false); }}
+                  maxLength={30}
+                  className="form-input"
+                  style={{ maxWidth: 200, padding: '5px 10px', fontSize: 'var(--fs-sm)' }}
+                />
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handleSaveDisplayName}
+                  disabled={nameSaving}
+                  style={{ padding: '5px 12px', fontSize: '0.8rem' }}
+                >
+                  {nameSaving ? '...' : 'Save'}
+                </button>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => { setEditingName(false); setNameError(''); setNewDisplayName(profile.display_name || ''); }}
+                  style={{ padding: '5px 10px', fontSize: '0.8rem' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 500 }}>{profile.display_name || '—'}</span>
+                <button
+                  onClick={() => { setEditingName(true); setNameError(''); }}
+                  style={{
+                    background: 'none', border: '1px solid var(--color-border)',
+                    borderRadius: 6, padding: '3px 10px', fontSize: '0.75rem',
+                    cursor: 'pointer', color: 'var(--color-text-muted)',
+                  }}
+                >
+                  ✏️ Edit
+                </button>
+              </div>
+            )}
+          </div>
+          {nameError && (
+            <div style={{ fontSize: '0.8rem', color: 'var(--color-error)', marginTop: -8 }}>{nameError}</div>
+          )}
+
+          {/* Other read-only fields */}
           {[
-            ['Name', profile.full_name],
-            ['Display Name', profile.display_name || '—'],
-            ['Company', profile.company_name || '—'],
-            ['Email', profile.email],
-            ['Mobile', profile.mobile_number],
+            ['Name',          profile.full_name],
+            ['Company',       profile.company_name || '—'],
+            ['Email',         profile.email],
+            ['Mobile',        profile.mobile_number],
             ['Favorite Team', profile.favorite_team?.name || 'Not selected'],
-            ['Joined', new Date(profile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })],
+            ['Joined',        new Date(profile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })],
           ].map(([label, value]) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) 0', borderBottom: '1px solid var(--color-border)' }}>
               <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--fs-sm)' }}>{label}</span>
