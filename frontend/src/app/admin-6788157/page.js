@@ -269,8 +269,10 @@ function UsersTab() {
     } catch { setUserPreds(null); }
   };
 
-  const [banTarget, setBanTarget] = useState(null);
-  const [banLoading, setBanLoading] = useState(false);
+  const [banTarget, setBanTarget]     = useState(null);
+  const [banLoading, setBanLoading]   = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const handleBan = async () => {
     if (!banTarget) return;
@@ -285,6 +287,19 @@ function UsersTab() {
       alert('Action failed: ' + (err.message || 'Unknown error'));
     }
     setBanLoading(false);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      await api.del(`/api/admin/users/${deleteTarget.id}`, { adminAuth: true });
+      setDeleteTarget(null);
+      fetchUsers();
+    } catch (err) {
+      alert('Delete failed: ' + (err.message || 'Unknown error'));
+    }
+    setDeleteLoading(false);
   };
 
   const handleExport = async (format) => {
@@ -376,6 +391,18 @@ function UsersTab() {
                     >
                       {u.is_banned ? 'Unban' : 'Ban'}
                     </button>
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => setDeleteTarget(u)}
+                      style={{
+                        background: 'rgba(100,0,0,0.12)',
+                        border: '1px solid rgba(180,0,0,0.35)',
+                        color: '#cc0000',
+                        fontWeight: 700, fontSize: '0.75rem', padding: '4px 10px',
+                      }}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -392,6 +419,46 @@ function UsersTab() {
           <button className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</button>
           <span style={{ padding: 'var(--space-2) var(--space-4)', fontSize: 'var(--fs-sm)', color: 'var(--color-text-muted)' }}>Page {page} of {pagination.pages}</span>
           <button className="btn btn-ghost btn-sm" disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}>Next</button>
+        </div>
+      )}
+
+      {/* Delete User Confirmation Modal */}
+      {deleteTarget && (
+        <div className="modal-backdrop" onClick={() => setDeleteTarget(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div className="modal-header">
+              <h3 style={{ color: '#cc0000' }}>⚠️ Delete User</h3>
+              <button className="modal-close" onClick={() => setDeleteTarget(null)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ marginBottom: 'var(--space-2)', fontWeight: 600 }}>
+                You are about to permanently delete:
+              </p>
+              <div style={{
+                background: 'rgba(200,0,0,0.06)', border: '1px solid rgba(200,0,0,0.2)',
+                borderRadius: 8, padding: '10px 14px', marginBottom: 'var(--space-4)'
+              }}>
+                <strong>{deleteTarget.full_name}</strong>
+                <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginLeft: 8 }}>
+                  {deleteTarget.email}
+                </span>
+              </div>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.88rem', marginBottom: 'var(--space-5)' }}>
+                This will delete the user and all their predictions from the database. <strong>This cannot be undone.</strong>
+              </p>
+              <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end' }}>
+                <button className="btn btn-secondary btn-sm" onClick={() => setDeleteTarget(null)}>Cancel</button>
+                <button
+                  className="btn btn-sm"
+                  onClick={handleDelete}
+                  disabled={deleteLoading}
+                  style={{ background: '#cc0000', color: '#fff', fontWeight: 700, border: 'none' }}
+                >
+                  {deleteLoading ? 'Deleting...' : 'Yes, Delete Permanently'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
