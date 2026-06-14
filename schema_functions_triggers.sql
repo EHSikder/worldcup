@@ -28,6 +28,7 @@ BEGIN
   RETURN true;
 END;
 
+
 can_predict
 
 DECLARE
@@ -59,6 +60,7 @@ BEGIN
   RETURN true;
 END;
 
+
 recalculate_user_points
 
 DECLARE
@@ -82,29 +84,6 @@ BEGIN
   RETURN total;
 END;
 
-recalculate_user_points
-
-
-DECLARE
-  match_pts  INTEGER;
-  champ_pts  INTEGER;
-  total      INTEGER;
-BEGIN
-  SELECT COALESCE(SUM(points_earned), 0)
-  INTO match_pts
-  FROM predictions
-  WHERE user_id = p_user_id;
-
-  SELECT COALESCE(points_earned, 0)
-  INTO champ_pts
-  FROM champion_predictions
-  WHERE user_id = p_user_id;
-
-  total := match_pts + COALESCE(champ_pts, 0);
-
-  UPDATE users SET total_points = total WHERE id = p_user_id;
-  RETURN total;
-END;
 
 score_match_predictions
 
@@ -173,6 +152,7 @@ BEGIN
   RETURN total_scored;
 END;
 
+
 trigger_auto_score_on_finish
 
 
@@ -195,7 +175,7 @@ BEGIN
   THEN
     UPDATE predictions
     SET is_locked     = true,
-        locked_reason = 'match_started',
+        locked_reason = 'time_lock',
         updated_at    = NOW()
     WHERE match_number = NEW.match_number
       AND is_locked = false;
@@ -210,6 +190,16 @@ BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
+
+increment_token_version
+
+  BEGIN
+  UPDATE public.users
+  SET jwt_token_version = COALESCE(jwt_token_version, 1) + 1,
+      updated_at = NOW()
+  WHERE id = user_id;
+END;
+
 
 *Triggers*-
 
