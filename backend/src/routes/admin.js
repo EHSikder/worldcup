@@ -455,26 +455,24 @@ router.post('/users/:id/ban', adminAuth, async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'is_banned must be a boolean.' });
     }
 
-    // 1. Fetch current jwt_token_version first
-    const { data: existing, error: fetchErr } = await supabase
+    // Step 1: get current token version so we can increment it
+    const { data: current, error: fetchError } = await supabase
       .from('users')
-      .select('id, full_name, is_banned, jwt_token_version')
+      .select('id, full_name, jwt_token_version')
       .eq('id', id)
       .single();
 
-    if (fetchErr || !existing) {
+    if (fetchError || !current) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
-    // 2. Update is_banned + bump jwt_token_version to kick them out immediately
-    const newTokenVersion = (existing.jwt_token_version || 1) + 1;
-
+    // Step 2: single update — set is_banned + bump token version (no RPC needed)
     const { data, error } = await supabase
       .from('users')
       .update({
         is_banned,
-        jwt_token_version: newTokenVersion,
-        updated_at: new Date(),
+        jwt_token_version: (current.jwt_token_version || 1) + 1,
+        updated_at:        new Date().toISOString(),
       })
       .eq('id', id)
       .select('id, full_name, is_banned')
@@ -485,7 +483,7 @@ router.post('/users/:id/ban', adminAuth, async (req, res, next) => {
     res.json({
       success: true,
       message: is_banned
-        ? `${data.full_name} has been banned and logged out.`
+        ? `${data.full_name} has been banned and their session invalidated.`
         : `${data.full_name} has been unbanned.`,
       data,
     });
