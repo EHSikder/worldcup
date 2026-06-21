@@ -1,11 +1,12 @@
 const rateLimit = require('express-rate-limit');
 
 /**
- * General rate limiter: 100 requests per 15 minutes
+ * General rate limiter: 200 requests per 15 minutes per IP.
+ * Applied globally to all /api/ routes.
  */
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -15,11 +16,12 @@ const generalLimiter = rateLimit({
 });
 
 /**
- * Auth rate limiter: 5 requests per 15 minutes (login, register, OTP)
+ * Auth rate limiter: 10 requests per 15 minutes per IP.
+ * Applied to signup/login for regular users.
  */
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -28,4 +30,19 @@ const authLimiter = rateLimit({
   },
 });
 
-module.exports = { generalLimiter, authLimiter };
+/**
+ * Admin rate limiter: 60 requests per 15 minutes per IP.
+ * More generous — admins do many actions in quick succession.
+ */
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many admin requests. Please try again in a few minutes.',
+  },
+});
+
+module.exports = { generalLimiter, authLimiter, adminLimiter };
