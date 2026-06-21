@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const supabase = require('../config/database');
 const { signAdminToken } = require('../utils/jwt');
 const adminAuth = require('../middleware/adminAuth');
-const { authLimiter } = require('../middleware/rateLimit');
+const { adminLimiter } = require('../middleware/rateLimit');
 const { generateXlsx, generateCsv } = require('../services/exportService');
 const { runSync } = require('../cron/syncMatches');
 const {
@@ -21,7 +21,7 @@ const {
  * POST /api/admin/login
  * Admin login — uses the admin_users table with username + password
  */
-router.post('/login', authLimiter, async (req, res, next) => {
+router.post('/login', adminLimiter, async (req, res, next) => {
   try {
     const { username, password } = req.body;
 
@@ -486,45 +486,6 @@ router.post('/users/:id/ban', adminAuth, async (req, res, next) => {
         ? `${data.full_name} has been banned and their session invalidated.`
         : `${data.full_name} has been unbanned.`,
       data,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-
-/* ─── Delete a user entirely ─────────────────────────────────────── */
-router.delete('/users/:id', adminAuth, async (req, res, next) => {
-  try {
-    const { id } = req.params;
-
-    // Fetch first so we have the name for the response
-    const { data: user, error: fetchError } = await supabase
-      .from('users')
-      .select('id, full_name')
-      .eq('id', id)
-      .single();
-
-    if (fetchError || !user) {
-      return res.status(404).json({ success: false, message: 'User not found.' });
-    }
-
-    // Delete child rows first (foreign key constraints)
-    await supabase.from('predictions').delete().eq('user_id', id);
-    await supabase.from('champion_predictions').delete().eq('user_id', id);
-    await supabase.from('push_subscriptions').delete().eq('user_id', id);
-
-    // Now delete the user row
-    const { error: deleteError } = await supabase
-      .from('users')
-      .delete()
-      .eq('id', id);
-
-    if (deleteError) throw deleteError;
-
-    res.json({
-      success: true,
-      message: `${user.full_name} has been permanently deleted.`,
     });
   } catch (err) {
     next(err);
