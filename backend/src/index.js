@@ -18,6 +18,11 @@ const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 
+// Trust Render/Heroku/Vercel reverse proxy so express-rate-limit
+// reads the real client IP from X-Forwarded-For instead of the
+// internal load-balancer IP (which would bucket ALL users together).
+app.set('trust proxy', 1);
+
 // ── Security & Parsing ──────────────────────────────────────
 app.use(helmet());
 
