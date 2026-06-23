@@ -19,7 +19,13 @@ const env = Object.freeze({
   SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY,
   JWT_SECRET: process.env.JWT_SECRET,
   ADMIN_JWT_SECRET: process.env.ADMIN_JWT_SECRET,
-  API_FOOTBALL_KEY: process.env.API_FOOTBALL_KEY || '',
+  // TheSportsDB V2 API (premium). Auth is sent as the X-API-KEY header.
+  //   LEAGUE_ID 4429 = FIFA World Cup; SEASON e.g. 2026 — verify both in your
+  //   TheSportsDB dashboard for the exact competition you're tracking.
+  THESPORTSDB_API_KEY:   process.env.THESPORTSDB_API_KEY || '',
+  THESPORTSDB_BASE_URL:  process.env.THESPORTSDB_BASE_URL || 'https://www.thesportsdb.com/api/v2/json',
+  THESPORTSDB_LEAGUE_ID: process.env.THESPORTSDB_LEAGUE_ID || '4429',
+  THESPORTSDB_SEASON:    process.env.THESPORTSDB_SEASON || '2026',
   TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',
   TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
   TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER || '',
