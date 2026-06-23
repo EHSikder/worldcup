@@ -82,9 +82,9 @@ CREATE TABLE public.predictions (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT predictions_pkey PRIMARY KEY (id),
-  CONSTRAINT predictions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT predictions_match_number_fkey FOREIGN KEY (match_number) REFERENCES public.matches(match_number),
-  CONSTRAINT predictions_predicted_winner_team_id_fkey FOREIGN KEY (predicted_winner_team_id) REFERENCES public.teams(id)
+  CONSTRAINT predictions_predicted_winner_team_id_fkey FOREIGN KEY (predicted_winner_team_id) REFERENCES public.teams(id),
+  CONSTRAINT predictions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.bracket_locks (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -131,8 +131,8 @@ CREATE TABLE public.champion_predictions (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT champion_predictions_pkey PRIMARY KEY (id),
-  CONSTRAINT champion_predictions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT champion_predictions_predicted_champion_team_id_fkey FOREIGN KEY (predicted_champion_team_id) REFERENCES public.teams(id)
+  CONSTRAINT champion_predictions_predicted_champion_team_id_fkey FOREIGN KEY (predicted_champion_team_id) REFERENCES public.teams(id),
+  CONSTRAINT champion_predictions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.push_subscriptions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
