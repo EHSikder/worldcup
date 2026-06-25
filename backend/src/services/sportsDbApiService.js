@@ -55,6 +55,36 @@ function toInt(v) {
   return Number.isNaN(n) ? null : n;
 }
 
+// Common World Cup name variants → one canonical key, so our DB team names and
+// TheSportsDB's names line up despite accents / spelling / format differences.
+// (Both "USA" and "United States" → "unitedstates"; "Côte d'Ivoire" and
+// "Ivory Coast" → "cotedivoire", etc.) Add a line here if a team won't link.
+const TEAM_CANON = {
+  usa: 'unitedstates', unitedstatesofamerica: 'unitedstates', us: 'unitedstates',
+  korearepublic: 'southkorea', republicofkorea: 'southkorea',
+  koreadpr: 'northkorea', dprkorea: 'northkorea',
+  iriran: 'iran', islamicrepublicofiran: 'iran',
+  chinapr: 'china',
+  czechia: 'czechrepublic',
+  turkiye: 'turkey',
+  ivorycoast: 'cotedivoire',
+  capeverdeislands: 'caboverde', capeverde: 'caboverde',
+  bosniaandherzegovina: 'bosnia',
+};
+
+/** Strip accents + punctuation + case so names compare reliably. */
+function normalizeName(s) {
+  if (!s) return '';
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/** Canonical team key — normalized name, with known WC aliases folded together. */
+function canonTeam(s) {
+  const n = normalizeName(s);
+  return TEAM_CANON[n] || n;
+}
+
 /**
  * Map a TheSportsDB soccer status to our match_status enum.
  * Codes: TBD NS 1H HT 2H ET P FT AET PEN BT SUSP INT PST CANC ABD AWD WO
@@ -126,4 +156,5 @@ module.exports = {
   parseEvent,
   mapStatus,
   getWinnerApiId,
+  canonTeam,
 };

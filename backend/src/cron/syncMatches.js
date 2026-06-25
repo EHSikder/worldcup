@@ -6,6 +6,7 @@ const {
   fetchLiveScores,
   parseEvent,
   getWinnerApiId,
+  canonTeam,
 } = require('../services/sportsDbApiService');
 const {
   scoreMatch,
@@ -29,10 +30,10 @@ async function buildContext() {
   const teamByName  = new Map();
   (teams || []).forEach((t) => {
     if (t.thesportsdb_id) teamByApiId.set(String(t.thesportsdb_id), t);
-    if (t.name)           teamByName.set(t.name.trim().toLowerCase(), t);
+    if (t.name)           teamByName.set(canonTeam(t.name), t);
   });
 
-  return { teamByApiId, teamByName };
+  return { teamByApiId, teamByName, unresolved: new Map() };
 }
 
 /**
@@ -45,7 +46,9 @@ async function resolveTeam(apiId, apiName, ctx) {
   if (apiId && ctx.teamByApiId.has(apiId)) return ctx.teamByApiId.get(apiId).id;
 
   if (apiName) {
-    const t = ctx.teamByName.get(apiName.trim().toLowerCase());
+    // canonTeam folds accents/casing/aliases ("USA"↔"United States", etc.) so
+    // names line up even when TheSportsDB spells a team differently than our DB.
+    const t = ctx.teamByName.get(canonTeam(apiName));
     if (t) {
       if (apiId && !t.thesportsdb_id) {
         await supabase.from('teams').update({ thesportsdb_id: apiId }).eq('id', t.id);
@@ -54,6 +57,9 @@ async function resolveTeam(apiId, apiName, ctx) {
       }
       return t.id;
     }
+    // Couldn't match — record (name + id) so the run logs exactly which teams
+    // need a manual thesportsdb_id.
+    if (ctx.unresolved && apiId) ctx.unresolved.set(apiName, apiId);
   }
   return null;
 }
@@ -211,6 +217,13 @@ async function runSync() {
       errors.push(`Locking Error: ${e.message}`);
     }
 
+    // Name the exact teams we couldn't match, so you can map them once:
+    //   UPDATE teams SET thesportsdb_id = '<id>' WHERE name = '<your team name>';
+    if (ctx.unresolved.size) {
+      const list = [...ctx.unresolved.entries()].map(([name, id]) => `"${name}" (id ${id})`).join(', ');
+      console.warn(`⚠️ ${ctx.unresolved.size} TheSportsDB team(s) didn't match any DB team — set their thesportsdb_id: ${list}`);
+    }
+
     await supabase
       .from('sync_log')
       .update({
@@ -247,12 +260,22 @@ async function processMatchUpdate(dbMatch, parsed, resolved, errors, incMatches,
   const previousStatus = dbMatch.status;
   const { homeTeamId, awayTeamId, winnerTeamId } = resolved;
 
+  // No draws in the knockout stage. TheSportsDB's feed has no penalty column, so
+  // a level "finished" score means we don't know who advanced yet — keep the
+  // match showing in-progress (penalties) and DON'T finalize/score/advance until
+  // a winner is known (a later poll, or an admin setting it).
+  let effStatus = parsed.status;
+  if (parsed.status === 'finished' && dbMatch.round !== 'group_stage' && !winnerTeamId) {
+    effStatus = 'penalties';
+    console.warn(`⏳ Match #${dbMatch.match_number} level ${parsed.homeScore}-${parsed.awayScore} in knockout — awaiting winner (penalties); kept in-progress.`);
+  }
+
   // Build ONLY changed columns — avoids needless updated_at bumps + realtime
   // events on every sync. (TheSportsDB's feed has no ET/penalty columns, so
   // those are left for manual entry on a penalty-shootout match.)
   const updateData = {};
-  if (parsed.status && parsed.status !== 'scheduled' && parsed.status !== dbMatch.status) {
-    updateData.status = parsed.status;
+  if (effStatus && effStatus !== 'scheduled' && effStatus !== dbMatch.status) {
+    updateData.status = effStatus;
   }
   if (parsed.kickoffTime &&
       new Date(parsed.kickoffTime).getTime() !== new Date(dbMatch.kickoff_time || 0).getTime()) {
@@ -280,13 +303,10 @@ async function processMatchUpdate(dbMatch, parsed, resolved, errors, incMatches,
     incMatches();
   }
 
-  // If status changed to 'finished', trigger scoring and bracket advancement.
-  if (previousStatus !== 'finished' && parsed.status === 'finished') {
+  // Finalize ONLY when we truly have a finished result (knockouts require a
+  // winner — see effStatus above), then score + advance the bracket.
+  if (previousStatus !== 'finished' && effStatus === 'finished') {
     console.log(`🏆 Match #${dbMatch.match_number} finished! Scoring...`);
-
-    if (!winnerTeamId && parsed.homeScore === parsed.awayScore && dbMatch.round !== 'group_stage') {
-      console.warn(`⚠️ Match #${dbMatch.match_number} finished level ${parsed.homeScore}-${parsed.awayScore} — decided on penalties; set winner_team_id manually, then re-score.`);
-    }
 
     // Lock predictions for this match (if not already locked by time).
     const { count } = await supabase
