@@ -49,6 +49,28 @@ async function fetchLeagueTeams() {
   return extractArray(data, ['teams', 'list']);
 }
 
+// The v1 lookupevent endpoint (key in the path, free) returns a richer single
+// event that includes the EXTRA-TIME score — which the v2 livescore/schedule
+// feeds don't expose. We use it to break a tie in a knockout that was decided
+// in extra time (no penalties).
+const V1_BASE = 'https://www.thesportsdb.com/api/v1/json';
+
+/** Returns { etHome, etAway } (extra-time score) for an event, or null. */
+async function fetchEventExtraTime(eventId) {
+  if (!API_KEY) throw new Error('THESPORTSDB_API_KEY is missing.');
+  const { data } = await axios.get(`${V1_BASE}/${API_KEY}/lookupevent.php`, {
+    params: { id: eventId },
+    timeout: 20000,
+  });
+  const ev = data && Array.isArray(data.events) ? data.events[0] : null;
+  if (!ev) return null;
+  // NOTE: the real field names are intHomeScoreExtra / intAwayScoreExtra.
+  return {
+    etHome: toInt(ev.intHomeScoreExtra),
+    etAway: toInt(ev.intAwayScoreExtra),
+  };
+}
+
 function toInt(v) {
   if (v === null || v === undefined || v === '') return null;
   const n = parseInt(v, 10);
@@ -153,6 +175,7 @@ module.exports = {
   fetchSchedule,
   fetchLiveScores,
   fetchLeagueTeams,
+  fetchEventExtraTime,
   parseEvent,
   mapStatus,
   getWinnerApiId,

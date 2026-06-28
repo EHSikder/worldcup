@@ -4,14 +4,20 @@ const env = require('../config/env');
 const {
   fetchSchedule,
   fetchLiveScores,
+  fetchEventExtraTime,
   parseEvent,
   getWinnerApiId,
   canonTeam,
 } = require('../services/sportsDbApiService');
+const { fetchEspnScoreboard, findCompletedWinnerName } = require('../services/espnService');
 const {
   scoreMatch,
   scoreChampionPredictions,
 } = require('../services/scoringService');
+
+// Minutes to wait after a knockout ties (penalties) before asking ESPN for the
+// shootout winner — lets the shootout finish first.
+const PENALTY_WAIT_MIN = 10;
 
 // Columns processMatchUpdate / linkMatch need from a match row.
 const MATCH_COLS =
@@ -186,6 +192,14 @@ async function runSync() {
       errors.push(`Schedule Error: ${e.message}`);
     }
 
+    // 2b. Resolve penalty-shootout winners via ESPN (knockout matches that tied
+    //     and have waited out the shootout). Safe with dual matches.
+    try {
+      await resolvePendingPenalties(ctx, errors, incMatches, addPoints);
+    } catch (e) {
+      errors.push(`Penalty resolution Error: ${e.message}`);
+    }
+
     // 3. Lock predictions for matches starting in < 5 minutes.
     try {
       const { data: upcomingMatches } = await supabase
@@ -260,20 +274,37 @@ async function processMatchUpdate(dbMatch, parsed, resolved, errors, incMatches,
   const previousStatus = dbMatch.status;
   const { homeTeamId, awayTeamId, winnerTeamId } = resolved;
 
-  // No draws in the knockout stage. TheSportsDB's feed has no penalty column, so
-  // a level "finished" score means we don't know who advanced yet — keep the
-  // match showing in-progress (penalties) and DON'T finalize/score/advance until
-  // a winner is known (a later poll, or an admin setting it).
+  // Effective result — extra time / penalties may override the raw feed below.
   let effStatus = parsed.status;
+  let effWinner = winnerTeamId;
+  let effHome   = parsed.homeScore;
+  let effAway   = parsed.awayScore;
+  const extra   = {}; // ET / penalties_since columns to write, if any
+
+  // No draws in the knockout stage. A level "finished" score means we don't yet
+  // know who advanced. First try EXTRA TIME (v1 lookupevent); if still level,
+  // it's penalties — keep it in-progress and let the ESPN pass resolve it.
   if (parsed.status === 'finished' && dbMatch.round !== 'group_stage' && !winnerTeamId) {
-    effStatus = 'penalties';
-    console.warn(`⏳ Match #${dbMatch.match_number} level ${parsed.homeScore}-${parsed.awayScore} in knockout — awaiting winner (penalties); kept in-progress.`);
+    let et = null;
+    try { if (parsed.eventId) et = await fetchEventExtraTime(parsed.eventId); }
+    catch (e) { console.warn(`Extra-time lookup failed (#${dbMatch.match_number}):`, e.message); }
+
+    if (et && et.etHome != null && et.etAway != null && et.etHome !== et.etAway) {
+      extra.home_extra_time_score = et.etHome;
+      extra.away_extra_time_score = et.etAway;
+      effHome = et.etHome;   // ET score is the final scoreline
+      effAway = et.etAway;
+      effWinner = et.etHome > et.etAway ? homeTeamId : awayTeamId;
+      console.log(`⏱️ Match #${dbMatch.match_number} decided in extra time ${et.etHome}-${et.etAway}.`);
+    } else {
+      effStatus = 'penalties';
+      if (dbMatch.status !== 'penalties') extra.penalties_since = new Date().toISOString();
+      console.warn(`⏳ Match #${dbMatch.match_number} level — penalties; winner via ESPN after ${PENALTY_WAIT_MIN} min.`);
+    }
   }
 
-  // Build ONLY changed columns — avoids needless updated_at bumps + realtime
-  // events on every sync. (TheSportsDB's feed has no ET/penalty columns, so
-  // those are left for manual entry on a penalty-shootout match.)
-  const updateData = {};
+  // Build ONLY changed columns.
+  const updateData = { ...extra };
   if (effStatus && effStatus !== 'scheduled' && effStatus !== dbMatch.status) {
     updateData.status = effStatus;
   }
@@ -281,14 +312,13 @@ async function processMatchUpdate(dbMatch, parsed, resolved, errors, incMatches,
       new Date(parsed.kickoffTime).getTime() !== new Date(dbMatch.kickoff_time || 0).getTime()) {
     updateData.kickoff_time = parsed.kickoffTime;
   }
-  if (parsed.homeScore !== null && parsed.homeScore !== dbMatch.home_score) updateData.home_score = parsed.homeScore;
-  if (parsed.awayScore !== null && parsed.awayScore !== dbMatch.away_score) updateData.away_score = parsed.awayScore;
+  if (effHome != null && effHome !== dbMatch.home_score) updateData.home_score = effHome;
+  if (effAway != null && effAway !== dbMatch.away_score) updateData.away_score = effAway;
 
-  // Only fill team ids if the match doesn't already have them (knockouts get
-  // their teams from bracket advancement below).
+  // Only fill team ids if the match doesn't already have them.
   if (homeTeamId && !dbMatch.home_team_id) updateData.home_team_id = homeTeamId;
   if (awayTeamId && !dbMatch.away_team_id) updateData.away_team_id = awayTeamId;
-  if (winnerTeamId && winnerTeamId !== dbMatch.winner_team_id) updateData.winner_team_id = winnerTeamId;
+  if (effWinner && effWinner !== dbMatch.winner_team_id) updateData.winner_team_id = effWinner;
 
   if (Object.keys(updateData).length > 0) {
     const { error: updateError } = await supabase
@@ -303,69 +333,111 @@ async function processMatchUpdate(dbMatch, parsed, resolved, errors, incMatches,
     incMatches();
   }
 
-  // Finalize ONLY when we truly have a finished result (knockouts require a
-  // winner — see effStatus above), then score + advance the bracket.
+  // Finalize ONLY when we truly have a finished result (knockouts require a winner).
   if (previousStatus !== 'finished' && effStatus === 'finished') {
-    console.log(`🏆 Match #${dbMatch.match_number} finished! Scoring...`);
+    await finalizeMatch(dbMatch, effWinner, homeTeamId, awayTeamId, effHome, effAway, errors, incLocked, addPoints);
+  }
+}
 
-    // Lock predictions for this match (if not already locked by time).
-    const { count } = await supabase
-      .from('predictions')
-      .update({ is_locked: true, locked_reason: 'result_confirmed' })
-      .eq('match_number', dbMatch.match_number)
-      .eq('is_locked', false)
-      .select('*', { count: 'exact', head: true });
+/**
+ * Lock + score a finished match, score the champion on the final, and advance
+ * the bracket. Shared by the normal sync and the ESPN penalty resolver.
+ */
+async function finalizeMatch(dbMatch, winnerTeamId, homeTeamId, awayTeamId, homeScore, awayScore, errors, incLocked, addPoints) {
+  console.log(`🏆 Match #${dbMatch.match_number} finished! Scoring...`);
 
-    incLocked(count || 0);
+  const { count } = await supabase
+    .from('predictions')
+    .update({ is_locked: true, locked_reason: 'result_confirmed' })
+    .eq('match_number', dbMatch.match_number)
+    .eq('is_locked', false)
+    .select('*', { count: 'exact', head: true });
+  if (incLocked) incLocked(count || 0);
 
-    // Score the match.
-    if (parsed.homeScore !== null && parsed.awayScore !== null) {
-      const result = await scoreMatch(
-        dbMatch.match_number,
-        winnerTeamId,
-        parsed.homeScore,
-        parsed.awayScore
-      );
-      addPoints(result.scored || 0);
+  if (homeScore != null && awayScore != null) {
+    const result = await scoreMatch(dbMatch.match_number, winnerTeamId, homeScore, awayScore);
+    if (addPoints) addPoints(result.scored || 0);
 
-      if (dbMatch.round === 'final') {
-        console.log('🏆 FINAL decided! Scoring champion predictions...');
-        await scoreChampionPredictions(winnerTeamId);
-      }
+    if (dbMatch.round === 'final') {
+      console.log('🏆 FINAL decided! Scoring champion predictions...');
+      await scoreChampionPredictions(winnerTeamId);
     }
+  }
 
-    // Advance winner.
-    if (winnerTeamId && dbMatch.feeds_into_match && dbMatch.feeds_into_slot) {
-      const slotColumn = dbMatch.feeds_into_slot === 'home' ? 'home_team_id' : 'away_team_id';
-      const { error: advanceError } = await supabase
+  // Advance winner.
+  if (winnerTeamId && dbMatch.feeds_into_match && dbMatch.feeds_into_slot) {
+    const slotColumn = dbMatch.feeds_into_slot === 'home' ? 'home_team_id' : 'away_team_id';
+    const { error: advanceError } = await supabase
+      .from('matches')
+      .update({ [slotColumn]: winnerTeamId })
+      .eq('match_number', dbMatch.feeds_into_match);
+    if (advanceError) errors.push(`Advance M#${dbMatch.match_number} → M#${dbMatch.feeds_into_match}: ${advanceError.message}`);
+    else console.log(`➡️ Advanced winner to Match #${dbMatch.feeds_into_match} (${dbMatch.feeds_into_slot} slot)`);
+  }
+
+  // Advance loser if semifinal (to third-place match #103).
+  if (dbMatch.round === 'semifinal') {
+    const loserTeamId = winnerTeamId === homeTeamId ? awayTeamId : homeTeamId;
+    if (loserTeamId) {
+      const thirdPlaceSlot = dbMatch.match_number === 101 ? 'home_team_id' : 'away_team_id';
+      const { error: thirdPlaceError } = await supabase
         .from('matches')
-        .update({ [slotColumn]: winnerTeamId })
-        .eq('match_number', dbMatch.feeds_into_match);
+        .update({ [thirdPlaceSlot]: loserTeamId })
+        .eq('match_number', 103);
+      if (thirdPlaceError) errors.push(`Third place advancement from M#${dbMatch.match_number}: ${thirdPlaceError.message}`);
+      else console.log(`➡️ Advanced loser from M#${dbMatch.match_number} to Match #103 (third place)`);
+    }
+  }
+}
 
-      if (advanceError) {
-        errors.push(`Advance M#${dbMatch.match_number} → M#${dbMatch.feeds_into_match}: ${advanceError.message}`);
-      } else {
-        console.log(`➡️ Advanced winner to Match #${dbMatch.feeds_into_match} (${dbMatch.feeds_into_slot} slot)`);
-      }
+/**
+ * For matches in 'penalties', once the wait elapses, read the shootout winner
+ * from ESPN (by team names + date) and finalize (score + advance). One ESPN
+ * call per date covers all matches that tied that day (dual matches).
+ */
+async function resolvePendingPenalties(ctx, errors, incMatches, addPoints) {
+  const { data: pens } = await supabase
+    .from('matches')
+    .select('id, match_number, round, status, kickoff_time, penalties_since, feeds_into_match, feeds_into_slot, home_team_id, away_team_id, home_score, away_score, home:home_team_id(name), away:away_team_id(name)')
+    .eq('status', 'penalties');
+  if (!pens || !pens.length) return;
+
+  const espnByDate = {};
+  for (const m of pens) {
+    if (!m.penalties_since) {
+      await supabase.from('matches').update({ penalties_since: new Date().toISOString() }).eq('id', m.id);
+      continue; // start the clock
+    }
+    if ((Date.now() - new Date(m.penalties_since).getTime()) / 60000 < PENALTY_WAIT_MIN) continue;
+
+    const homeName = m.home && m.home.name;
+    const awayName = m.away && m.away.name;
+    if (!homeName || !awayName) continue;
+
+    const dateStr = m.kickoff_time ? new Date(m.kickoff_time).toISOString().slice(0, 10).replace(/-/g, '') : '';
+    if (!(dateStr in espnByDate)) {
+      try { espnByDate[dateStr] = await fetchEspnScoreboard(dateStr || null); }
+      catch (e) { console.warn('ESPN fetch failed:', e.message); espnByDate[dateStr] = []; }
     }
 
-    // Advance loser if semifinal (to third-place match #103).
-    if (dbMatch.round === 'semifinal') {
-      const loserTeamId = winnerTeamId === homeTeamId ? awayTeamId : homeTeamId;
-      if (loserTeamId) {
-        const thirdPlaceSlot = dbMatch.match_number === 101 ? 'home_team_id' : 'away_team_id';
-        const { error: thirdPlaceError } = await supabase
-          .from('matches')
-          .update({ [thirdPlaceSlot]: loserTeamId })
-          .eq('match_number', 103);
+    const winnerName = findCompletedWinnerName(espnByDate[dateStr], homeName, awayName);
+    if (!winnerName) continue; // not decided yet — retry next cycle
 
-        if (thirdPlaceError) {
-          errors.push(`Third place advancement from M#${dbMatch.match_number}: ${thirdPlaceError.message}`);
-        } else {
-          console.log(`➡️ Advanced loser from M#${dbMatch.match_number} to Match #103 (third place)`);
-        }
-      }
-    }
+    const winnerUuid = await resolveTeam(null, winnerName, ctx);
+    if (!winnerUuid) { console.warn(`ESPN penalty winner "${winnerName}" (#${m.match_number}) not found in DB.`); continue; }
+
+    const { error } = await supabase.from('matches')
+      .update({ winner_team_id: winnerUuid, status: 'finished', updated_at: new Date().toISOString() })
+      .eq('id', m.id);
+    if (error) { errors.push(`Penalty finalize #${m.match_number}: ${error.message}`); continue; }
+    if (incMatches) incMatches();
+    console.log(`🥅 Match #${m.match_number} penalty winner: ${winnerName} (via ESPN).`);
+
+    await finalizeMatch(
+      { match_number: m.match_number, round: m.round, feeds_into_match: m.feeds_into_match, feeds_into_slot: m.feeds_into_slot },
+      winnerUuid, m.home_team_id, m.away_team_id, m.home_score, m.away_score,
+      errors, null, addPoints
+    );
   }
 }
 
