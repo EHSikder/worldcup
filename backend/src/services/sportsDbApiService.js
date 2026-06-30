@@ -49,27 +49,11 @@ async function fetchLeagueTeams() {
   return extractArray(data, ['teams', 'list']);
 }
 
-// The v1 lookupevent endpoint (key in the path, free) returns a richer single
-// event that includes the EXTRA-TIME score — which the v2 livescore/schedule
-// feeds don't expose. We use it to break a tie in a knockout that was decided
-// in extra time (no penalties).
-const V1_BASE = 'https://www.thesportsdb.com/api/v1/json';
-
-/** Returns { etHome, etAway } (extra-time score) for an event, or null. */
-async function fetchEventExtraTime(eventId) {
-  if (!API_KEY) throw new Error('THESPORTSDB_API_KEY is missing.');
-  const { data } = await axios.get(`${V1_BASE}/${API_KEY}/lookupevent.php`, {
-    params: { id: eventId },
-    timeout: 20000,
-  });
-  const ev = data && Array.isArray(data.events) ? data.events[0] : null;
-  if (!ev) return null;
-  // NOTE: the real field names are intHomeScoreExtra / intAwayScoreExtra.
-  return {
-    etHome: toInt(ev.intHomeScoreExtra),
-    etAway: toInt(ev.intAwayScoreExtra),
-  };
-}
+// NOTE: TheSportsDB DOES carry penalty results, but in the misleadingly-named
+// intHomeScoreExtra / intAwayScoreExtra fields, and only after a delay — so
+// reading them is unreliable and was mislabelling penalties as extra time.
+// We deliberately do NOT read scores from TheSportsDB once a knockout ties:
+// the match goes to 'penalties' and the WINNER is taken from ESPN instead.
 
 function toInt(v) {
   if (v === null || v === undefined || v === '') return null;
@@ -116,7 +100,7 @@ function mapStatus(raw) {
   const s = (raw || '').trim().toUpperCase();
   if (!s) return 'scheduled';
 
-  if (['FT', 'AET', 'PEN', 'AWD', 'WO', 'MATCH FINISHED', 'FINISHED', 'FULL TIME'].includes(s)) return 'finished';
+  if (['FT', 'AET', 'PEN', 'AP', 'AWD', 'WO', 'MATCH FINISHED', 'FINISHED', 'FULL TIME', 'AFTER PENALTIES', 'AFTER EXTRA TIME'].includes(s)) return 'finished';
   if (['HT', 'HALF TIME', 'HALFTIME'].includes(s)) return 'halftime';
   if (['ET', 'BT', 'EXTRA TIME', 'BREAK TIME'].includes(s)) return 'extra_time';
   if (['P', 'PENALTIES', 'PEN LIVE', 'PENALTY'].includes(s)) return 'penalties';
@@ -175,7 +159,6 @@ module.exports = {
   fetchSchedule,
   fetchLiveScores,
   fetchLeagueTeams,
-  fetchEventExtraTime,
   parseEvent,
   mapStatus,
   getWinnerApiId,
