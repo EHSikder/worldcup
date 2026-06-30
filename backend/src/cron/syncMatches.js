@@ -4,7 +4,6 @@ const env = require('../config/env');
 const {
   fetchSchedule,
   fetchLiveScores,
-  fetchEventExtraTime,
   parseEvent,
   getWinnerApiId,
   canonTeam,
@@ -149,7 +148,7 @@ async function runSync() {
           const homeTeamId = await resolveTeam(parsed.homeTeamApiId, parsed.homeTeamName, ctx);
           const awayTeamId = await resolveTeam(parsed.awayTeamApiId, parsed.awayTeamName, ctx);
           const dbMatch    = await linkMatch(parsed, homeTeamId, awayTeamId);
-          if (!dbMatch || dbMatch.status === 'finished') continue;
+          if (!dbMatch || dbMatch.status === 'finished' || dbMatch.status === 'penalties') continue;
 
           const winnerApiId  = getWinnerApiId(parsed);
           const winnerTeamId = winnerApiId ? await resolveTeam(winnerApiId, null, ctx) : null;
@@ -178,7 +177,7 @@ async function runSync() {
           const homeTeamId = await resolveTeam(parsed.homeTeamApiId, parsed.homeTeamName, ctx);
           const awayTeamId = await resolveTeam(parsed.awayTeamApiId, parsed.awayTeamName, ctx);
           const dbMatch    = await linkMatch(parsed, homeTeamId, awayTeamId);
-          if (!dbMatch || dbMatch.status === 'finished') continue;
+          if (!dbMatch || dbMatch.status === 'finished' || dbMatch.status === 'penalties') continue;
 
           const winnerApiId  = getWinnerApiId(parsed);
           const winnerTeamId = winnerApiId ? await resolveTeam(winnerApiId, null, ctx) : null;
@@ -285,22 +284,12 @@ async function processMatchUpdate(dbMatch, parsed, resolved, errors, incMatches,
   // know who advanced. First try EXTRA TIME (v1 lookupevent); if still level,
   // it's penalties — keep it in-progress and let the ESPN pass resolve it.
   if (parsed.status === 'finished' && dbMatch.round !== 'group_stage' && !winnerTeamId) {
-    let et = null;
-    try { if (parsed.eventId) et = await fetchEventExtraTime(parsed.eventId); }
-    catch (e) { console.warn(`Extra-time lookup failed (#${dbMatch.match_number}):`, e.message); }
-
-    if (et && et.etHome != null && et.etAway != null && et.etHome !== et.etAway) {
-      extra.home_extra_time_score = et.etHome;
-      extra.away_extra_time_score = et.etAway;
-      effHome = et.etHome;   // ET score is the final scoreline
-      effAway = et.etAway;
-      effWinner = et.etHome > et.etAway ? homeTeamId : awayTeamId;
-      console.log(`⏱️ Match #${dbMatch.match_number} decided in extra time ${et.etHome}-${et.etAway}.`);
-    } else {
-      effStatus = 'penalties';
-      if (dbMatch.status !== 'penalties') extra.penalties_since = new Date().toISOString();
-      console.warn(`⏳ Match #${dbMatch.match_number} level — penalties; winner via ESPN after ${PENALTY_WAIT_MIN} min.`);
-    }
+    // Knockout level at full time → penalties. We do NOT read any score from
+    // TheSportsDB for it (its penalty field is unreliable/delayed): park it in
+    // 'penalties' with the level score and let the ESPN pass fill in the winner.
+    effStatus = 'penalties';
+    if (dbMatch.status !== 'penalties') extra.penalties_since = new Date().toISOString();
+    console.warn(`⏳ Match #${dbMatch.match_number} level — penalties; winner via ESPN.`);
   }
 
   // Build ONLY changed columns.
@@ -403,11 +392,13 @@ async function resolvePendingPenalties(ctx, errors, incMatches, addPoints) {
   if (!pens || !pens.length) return;
 
   const espnByDate = {};
+
   for (const m of pens) {
     if (!m.penalties_since) {
       await supabase.from('matches').update({ penalties_since: new Date().toISOString() }).eq('id', m.id);
       continue; // start the clock
     }
+    // Give the shootout time to finish before asking ESPN; then retry each cycle.
     if ((Date.now() - new Date(m.penalties_since).getTime()) / 60000 < PENALTY_WAIT_MIN) continue;
 
     const homeName = m.home && m.home.name;
@@ -426,17 +417,16 @@ async function resolvePendingPenalties(ctx, errors, incMatches, addPoints) {
     const winnerUuid = await resolveTeam(null, winnerName, ctx);
     if (!winnerUuid) { console.warn(`ESPN penalty winner "${winnerName}" (#${m.match_number}) not found in DB.`); continue; }
 
+    // Winner + finished only (level score kept; no penalty score). Then score + advance.
     const { error } = await supabase.from('matches')
       .update({ winner_team_id: winnerUuid, status: 'finished', updated_at: new Date().toISOString() })
       .eq('id', m.id);
     if (error) { errors.push(`Penalty finalize #${m.match_number}: ${error.message}`); continue; }
     if (incMatches) incMatches();
-    console.log(`🥅 Match #${m.match_number} penalty winner: ${winnerName} (via ESPN).`);
-
+    console.log(`🥅 #${m.match_number} penalty winner: ${winnerName} (via ESPN).`);
     await finalizeMatch(
       { match_number: m.match_number, round: m.round, feeds_into_match: m.feeds_into_match, feeds_into_slot: m.feeds_into_slot },
-      winnerUuid, m.home_team_id, m.away_team_id, m.home_score, m.away_score,
-      errors, null, addPoints
+      winnerUuid, m.home_team_id, m.away_team_id, m.home_score, m.away_score, errors, null, addPoints
     );
   }
 }
