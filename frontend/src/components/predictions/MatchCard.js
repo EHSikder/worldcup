@@ -59,6 +59,19 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
   const isFinished  = match.status === 'finished';
   const showLiveScore = ['live','halftime','extra_time','penalties','finished'].includes(match.status);
 
+  // Once finished: outline the real winner GREEN and a wrong user pick RED.
+  const actualWinnerSide = isFinished && match.winner_team_id
+    ? (match.winner_team_id === match.home_team?.id ? 'home'
+       : match.winner_team_id === match.away_team?.id ? 'away' : null)
+    : null;
+  const userPick = savedPrediction?.winner ?? prediction?.winner;
+  const resultOutline = (side) => {
+    if (!isFinished || !actualWinnerSide) return null;
+    if (side === actualWinnerSide) return '#A9DF00';                               // green (winner)
+    if (side === userPick && userPick !== actualWinnerSide) return '#DC2626';      // red (wrong pick)
+    return null;
+  };
+
   // Points display: show whenever we have a saved + locked prediction with a result
   const showPoints = isLocked && savedPrediction?.pointsEarned != null && isFinished;
 
@@ -177,7 +190,7 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
       {/* Teams */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32, padding: '0 10px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-          <div style={{ width: 80, height: 54, borderRadius: 10, overflow: 'hidden', border: '1px solid #F3F4F6', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', marginBottom: 12, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 80, height: 54, borderRadius: 10, overflow: 'hidden', border: resultOutline('home') ? `3px solid ${resultOutline('home')}` : '1px solid #F3F4F6', boxShadow: resultOutline('home') ? `0 0 0 3px ${resultOutline('home')}22` : '0 4px 10px rgba(0,0,0,0.05)', marginBottom: 12, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {homeTBC
               ? <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#8899B4', letterSpacing: '0.05em' }}>TBC</span>
               : <img src={homeFlag} alt={homeTeamName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -191,7 +204,7 @@ export default function MatchCard({ match, prediction, savedPrediction, onPredic
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-          <div style={{ width: 80, height: 54, borderRadius: 10, overflow: 'hidden', border: '1px solid #F3F4F6', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', marginBottom: 12, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 80, height: 54, borderRadius: 10, overflow: 'hidden', border: resultOutline('away') ? `3px solid ${resultOutline('away')}` : '1px solid #F3F4F6', boxShadow: resultOutline('away') ? `0 0 0 3px ${resultOutline('away')}22` : '0 4px 10px rgba(0,0,0,0.05)', marginBottom: 12, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {awayTBC
               ? <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#8899B4', letterSpacing: '0.05em' }}>TBC</span>
               : <img src={awayFlag} alt={awayTeamName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
