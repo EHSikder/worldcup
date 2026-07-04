@@ -22,8 +22,36 @@ const PENALTY_WAIT_MIN = 10;
 const MATCH_COLS =
   'id, match_number, round, status, winner_team_id, feeds_into_match, feeds_into_slot, kickoff_time, home_team_id, away_team_id, home_score, away_score, thesportsdb_event_id';
 
-// A pair of teams meets at most once in the tournament.
+// A pair of teams can meet up to twice (group + knockout), so a pair alone is
+// not a unique key — we disambiguate by date below.
 const pairKey = (a, b) => [a, b].sort().join('|');
+
+// Two games can share a DATE but never a kickoff TIME, so we disambiguate by
+// matching the event's kickoff to a candidate's kickoff (small tolerance for
+// minor feed differences). It NEVER guesses: if it can't confirm by time, it
+// links nothing — this is what stops the wrong-team updates.
+const KICKOFF_TOL_MS = 2 * 3600 * 1000; // 2h — well under the gap between same-day games
+const closeTime = (a, b) => !!(a && b) && Math.abs(new Date(a) - new Date(b)) <= KICKOFF_TOL_MS;
+
+/**
+ * Pick the ONE unlinked match a schedule event belongs to, from the candidates
+ * that share its team pair, by kickoff time:
+ *   • 1 candidate → if both have a time it must line up (rejects a stray event
+ *     with the same teams at a different time); a not-yet-scheduled match with
+ *     no time is allowed (seeding);
+ *   • 2+ candidates (teams meet in group AND knockout) → the one whose kickoff
+ *     matches this event's time; if none, don't guess (return null).
+ */
+function pickByTime(candidates, eventTime) {
+  const list = (candidates || []).filter((c) => !c.thesportsdb_event_id);
+  if (list.length === 0) return null;
+  if (list.length === 1) {
+    const c = list[0];
+    if (c.kickoff_time && eventTime && !closeTime(c.kickoff_time, eventTime)) return null;
+    return c;
+  }
+  return list.find((c) => closeTime(c.kickoff_time, eventTime)) || null;
+}
 
 /** Load teams once into lookup maps (by TheSportsDB id and by name). */
 async function buildContext() {
@@ -77,6 +105,7 @@ async function resolveTeam(apiId, apiName, ctx) {
  *     fills their teams; you can also set thesportsdb_event_id by hand.
  */
 async function linkMatch(parsed, homeUuid, awayUuid) {
+  // 1) Exact, by the stored TheSportsDB event id.
   if (parsed.eventId) {
     const { data } = await supabase
       .from('matches').select(MATCH_COLS)
@@ -84,23 +113,23 @@ async function linkMatch(parsed, homeUuid, awayUuid) {
     if (data && data[0]) return data[0];
   }
 
-  if (homeUuid && awayUuid) {
-    const { data } = await supabase
-      .from('matches').select(MATCH_COLS)
-      .is('thesportsdb_event_id', null)
-      .or(`and(home_team_id.eq.${homeUuid},away_team_id.eq.${awayUuid}),and(home_team_id.eq.${awayUuid},away_team_id.eq.${homeUuid})`)
-      .limit(1);
+  if (!homeUuid || !awayUuid) return null;
 
-    if (data && data[0]) {
-      const m = data[0];
-      if (parsed.eventId) {
-        await supabase.from('matches').update({ thesportsdb_event_id: parsed.eventId }).eq('id', m.id);
-        m.thesportsdb_event_id = parsed.eventId;
-      }
-      return m;
-    }
+  // 2) Team-pair fallback — ALL unlinked matches with this pair, then disambiguate
+  //    by date so a stray/duplicate event can't hijack the wrong match.
+  const { data: cands } = await supabase
+    .from('matches').select(MATCH_COLS)
+    .is('thesportsdb_event_id', null)
+    .or(`and(home_team_id.eq.${homeUuid},away_team_id.eq.${awayUuid}),and(home_team_id.eq.${awayUuid},away_team_id.eq.${homeUuid})`);
+
+  const m = pickByTime(cands || [], parsed.kickoffTime);
+  if (!m) return null;
+
+  if (parsed.eventId) {
+    await supabase.from('matches').update({ thesportsdb_event_id: parsed.eventId }).eq('id', m.id);
+    m.thesportsdb_event_id = parsed.eventId;
   }
-  return null;
+  return m;
 }
 
 async function runSync() {
