@@ -19,8 +19,10 @@ const {
 const PENALTY_WAIT_MIN = 10;
 
 // Columns processMatchUpdate / linkMatch need from a match row.
+// feeds_into_* are intentionally NOT selected — the system no longer advances
+// teams itself (see finalizeMatch); you set knockout teams / event ids manually.
 const MATCH_COLS =
-  'id, match_number, round, status, winner_team_id, feeds_into_match, feeds_into_slot, kickoff_time, home_team_id, away_team_id, home_score, away_score, thesportsdb_event_id';
+  'id, match_number, round, status, winner_team_id, kickoff_time, home_team_id, away_team_id, home_score, away_score, thesportsdb_event_id';
 
 // A pair of teams can meet up to twice (group + knockout), so a pair alone is
 // not a unique key — we disambiguate by date below.
@@ -100,9 +102,10 @@ async function resolveTeam(apiId, apiName, ctx) {
 /**
  * Link an API event → our match row.
  *  1) by matches.thesportsdb_event_id (preferred, exact)
- *  2) by team pair (auto-links once both teams resolve) and SELF-HEAL the
- *     event id. Knockout matches link automatically as bracket advancement
- *     fills their teams; you can also set thesportsdb_event_id by hand.
+ *  2) by team pair (auto-links once both teams are present) and SELF-HEAL the
+ *     event id. The system never advances teams itself, so a knockout match
+ *     links only after YOU set its teams (or its thesportsdb_event_id) — no
+ *     guesswork can put a wrong team into a later round.
  */
 async function linkMatch(parsed, homeUuid, awayUuid) {
   // 1) Exact, by the stored TheSportsDB event id.
@@ -358,8 +361,14 @@ async function processMatchUpdate(dbMatch, parsed, resolved, errors, incMatches,
 }
 
 /**
- * Lock + score a finished match, score the champion on the final, and advance
- * the bracket. Shared by the normal sync and the ESPN penalty resolver.
+ * Lock + score a finished match and score the champion on the final.
+ *
+ * NO bracket advancement. The system never writes teams into a later match —
+ * not the winner into feeds_into_match, not the semifinal loser into the third-
+ * place match. That auto-advance was the source of the "random wrong-team"
+ * updates, so it's removed: you fill each knockout match's teams (or its
+ * thesportsdb_event_id) manually and the feed only ever scores what's there.
+ * Shared by the normal sync and the ESPN penalty resolver.
  */
 async function finalizeMatch(dbMatch, winnerTeamId, homeTeamId, awayTeamId, homeScore, awayScore, errors, incLocked, addPoints) {
   console.log(`🏆 Match #${dbMatch.match_number} finished! Scoring...`);
@@ -381,31 +390,6 @@ async function finalizeMatch(dbMatch, winnerTeamId, homeTeamId, awayTeamId, home
       await scoreChampionPredictions(winnerTeamId);
     }
   }
-
-  // Advance winner.
-  if (winnerTeamId && dbMatch.feeds_into_match && dbMatch.feeds_into_slot) {
-    const slotColumn = dbMatch.feeds_into_slot === 'home' ? 'home_team_id' : 'away_team_id';
-    const { error: advanceError } = await supabase
-      .from('matches')
-      .update({ [slotColumn]: winnerTeamId })
-      .eq('match_number', dbMatch.feeds_into_match);
-    if (advanceError) errors.push(`Advance M#${dbMatch.match_number} → M#${dbMatch.feeds_into_match}: ${advanceError.message}`);
-    else console.log(`➡️ Advanced winner to Match #${dbMatch.feeds_into_match} (${dbMatch.feeds_into_slot} slot)`);
-  }
-
-  // Advance loser if semifinal (to third-place match #103).
-  if (dbMatch.round === 'semifinal') {
-    const loserTeamId = winnerTeamId === homeTeamId ? awayTeamId : homeTeamId;
-    if (loserTeamId) {
-      const thirdPlaceSlot = dbMatch.match_number === 101 ? 'home_team_id' : 'away_team_id';
-      const { error: thirdPlaceError } = await supabase
-        .from('matches')
-        .update({ [thirdPlaceSlot]: loserTeamId })
-        .eq('match_number', 103);
-      if (thirdPlaceError) errors.push(`Third place advancement from M#${dbMatch.match_number}: ${thirdPlaceError.message}`);
-      else console.log(`➡️ Advanced loser from M#${dbMatch.match_number} to Match #103 (third place)`);
-    }
-  }
 }
 
 /**
@@ -416,7 +400,7 @@ async function finalizeMatch(dbMatch, winnerTeamId, homeTeamId, awayTeamId, home
 async function resolvePendingPenalties(ctx, errors, incMatches, addPoints) {
   const { data: pens } = await supabase
     .from('matches')
-    .select('id, match_number, round, status, kickoff_time, penalties_since, feeds_into_match, feeds_into_slot, home_team_id, away_team_id, home_score, away_score, home:home_team_id(name), away:away_team_id(name)')
+    .select('id, match_number, round, status, kickoff_time, penalties_since, home_team_id, away_team_id, home_score, away_score, home:home_team_id(name), away:away_team_id(name)')
     .eq('status', 'penalties');
   if (!pens || !pens.length) return;
 
@@ -454,7 +438,7 @@ async function resolvePendingPenalties(ctx, errors, incMatches, addPoints) {
     if (incMatches) incMatches();
     console.log(`🥅 #${m.match_number} penalty winner: ${winnerName} (via ESPN).`);
     await finalizeMatch(
-      { match_number: m.match_number, round: m.round, feeds_into_match: m.feeds_into_match, feeds_into_slot: m.feeds_into_slot },
+      { match_number: m.match_number, round: m.round },
       winnerUuid, m.home_team_id, m.away_team_id, m.home_score, m.away_score, errors, null, addPoints
     );
   }
