@@ -34,7 +34,9 @@ export default function HomePage() {
     <>
       {/* ── HERO BANNER ─────────────────────────────────────────── */}
       <section className="hero-new" style={{ direction: 'ltr' }}>
-        {/* Background images — user uploads their own */}
+        {/* Banner artwork only — the headline and CTA buttons that used to sit
+            on top were removed, so nothing overlays the image.
+            Desktop art: 3721 × 2401 · Mobile art: 2400 × 3720 */}
         <div
           className="hero-new-bg hero-bg-desktop"
           style={{
@@ -52,35 +54,6 @@ export default function HomePage() {
           }}
         />
 
-        {/* Left side — empty image area */}
-        <div className="hero-new-left" />
-
-        {/* Right side — all text */}
-        <div className="hero-new-right" style={{ direction: isArabic ? 'rtl' : 'ltr' }}>
-          <div className="hero-right-content">
-
-            {/* Eyebrow label */}
-            <p className="hero-subtitle">
-              {isArabic ? t('hero_right_subtitle') : 'R-BUILD WORLD CUP CHALLENGE'}
-            </p>
-
-            {/* Main headline — single line, centered */}
-            <h1 className="hero-title">
-              {isArabic ? 'توقّع. تنافس. تصدّر.' : 'PREDICT. COMPETE. RISE.'}
-            </h1>
-
-            {/* CTA buttons */}
-            <div className="hero-actions">
-              <Link href="/login" className="btn-predict">
-                {isArabic ? t('hero_cta_primary') : 'Predict Now'}
-              </Link>
-              <Link href="/leaderboard" className="link-leaderboard">
-                {isArabic ? t('hero_cta_secondary') : 'LEADERBOARD'}
-              </Link>
-            </div>
-
-          </div>
-        </div>
       </section>
 
       {/* ── HOW IT WORKS ────────────────────────────────────────── */}

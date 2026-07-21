@@ -136,50 +136,35 @@ export default function LeaderboardPage() {
       <div className="container" style={{ padding: 'var(--space-6) var(--space-4)', minHeight: '80vh', maxWidth: 600, paddingBottom: currentUser ? 100 : 40 }}>
         <div style={{ marginBottom: 20 }}>
           <div
-  style={{
-    width: '100%',
-    maxWidth: '600px',
-    margin: '0 auto',
-    overflow: 'hidden',
-    borderRadius: 20,
-    lineHeight: 0
-  }}
->
-            <picture>
-              <source
-                media="(max-width: 768px)"
-                srcSet={
-                  isArabic
-                    ? '/images/leaderboard-banner-mobile-ar.webp'
-                    : '/images/leaderboard-banner-mobile-en.webp'
-                }
-              />
-              <source
-                media="(min-width: 769px)"
-                srcSet={
-                  isArabic
-                    ? '/images/leaderboard-banner-desktop-ar.webp'
-                    : '/images/leaderboard-banner-desktop-en.webp'
-                }
-              />
-              <img
-  src={
-    isArabic
-      ? '/images/leaderboard-banner-desktop-ar.webp'
-      : '/images/leaderboard-banner-desktop-en.webp'
-  }
-  alt="Leaderboard banner"
-  width="600"
-  height="132"
-  style={{
-    display: 'block',
-    width: '100%',
-    maxWidth: '600px',
-    height: 'auto',
-    margin: '0 auto'
-  }}
-/>
-            </picture>
+            style={{
+              width: '100%',
+              maxWidth: '600px',
+              margin: '0 auto',
+              overflow: 'hidden',
+              borderRadius: 20,
+              lineHeight: 0,
+            }}
+          >
+            {/* One 7200 × 2401 banner (GIF) for every screen size. The intrinsic
+                width/height below lock that exact ratio, so the banner scales
+                down and stays FULLY visible even on the narrowest phones —
+                nothing is cropped and no height is reserved incorrectly. */}
+            <img
+              src={
+                isArabic
+                  ? '/images/leaderboard-banner-ar.gif'
+                  : '/images/leaderboard-banner-en.gif'
+              }
+              alt="Leaderboard banner"
+              width="7200"
+              height="2401"
+              style={{
+                display: 'block',
+                width: '100%',
+                height: 'auto',
+                margin: '0 auto',
+              }}
+            />
           </div>
         </div>
 

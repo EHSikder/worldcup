@@ -590,12 +590,18 @@ h4 { font-size: var(--fs-xl); }
   padding: var(--space-2);
 }
 
-/* ── Hero Section (New Design) ────────────────────────────── */
+/* ── Hero Banner (image only) ──────────────────────────────
+   The hero is a pure aspect-ratio box matching the artwork, so the WHOLE
+   image stays visible at every width — large desktop, small desktop,
+   tablet and phone. It scales fluidly instead of being cropped to a fixed
+   height the way `cover` + `60vh` used to do.
+     Desktop art: 3721 × 2401
+     Mobile art:  2400 × 3720
+   No text or buttons are overlaid on the banner.                        */
 .hero-new {
   position: relative;
-  min-height: 450px;
-  height: 60vh;
-  display: flex;
+  width: 100%;
+  aspect-ratio: 3721 / 2401;   /* desktop artwork ratio */
   overflow: hidden;
   background: var(--color-surface-dark);
 }
@@ -603,7 +609,7 @@ h4 { font-size: var(--fs-xl); }
 .hero-new-bg {
   position: absolute;
   inset: 0;
-  background-size: cover;
+  background-size: contain;    /* never crop — always the complete image */
   background-position: center;
   background-repeat: no-repeat;
   z-index: 0;
@@ -613,7 +619,13 @@ h4 { font-size: var(--fs-xl); }
 .hero-bg-desktop { display: block; }
 .hero-bg-mobile  { display: none;  }
 
+/* Tablet + smaller desktops need no special case: the aspect-ratio box
+   above shrinks with the viewport and keeps the full image on screen. */
+
 @media (max-width: 768px) {
+  .hero-new {
+    aspect-ratio: 2400 / 3720; /* portrait mobile artwork ratio */
+  }
   .hero-bg-desktop { display: none;  }
   .hero-bg-mobile  { display: block; }
 }
@@ -780,11 +792,9 @@ h4 { font-size: var(--fs-xl); }
 
 /* Tablet: 768px–1024px — keep full two-panel desktop layout, just shrink fonts */
 @media (min-width: 769px) and (max-width: 1024px) {
-  .hero-new {
-    height: 55vw;          /* scales with viewport so both panels stay visible */
-    min-height: 380px;
-    max-height: 540px;
-  }
+  /* No .hero-new height override here: a fixed height would defeat the
+     aspect-ratio box and crop the art. Letting it scale keeps the FULL
+     desktop banner visible on tablets and smaller desktops. */
   .hero-title {
     font-size: clamp(1.4rem, 3vw, 2.8rem);
     white-space: nowrap;
@@ -810,11 +820,8 @@ h4 { font-size: var(--fs-xl); }
   .hero-new-left {
     display: none !important;
   }
-  .hero-new {
-    flex-direction: column;
-    height: auto;
-    min-height: 400px;
-  }
+  /* No .hero-new height/min-height override here either — the portrait
+     aspect-ratio box above sizes the mobile banner and shows it in full. */
   .hero-new-right {
     width: 100%;
     min-height: 400px;
